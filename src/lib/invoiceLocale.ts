@@ -44,6 +44,7 @@ export type InvoiceCopy = {
 		deleteManual: string;
 		manualBadge: string;
 		gitBadge: string;
+		editedBadge: string;
 		cancel: string;
 		saveItem: string;
 		selectEmail: string;
@@ -76,7 +77,7 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			commits: 'تعداد کامیت',
 			hours: 'نفر ساعت',
 			payment: 'پرداخت',
-			messages: 'پیام ها (خلاصه)',
+			messages: 'پیام‌ها',
 			source: 'منبع',
 			total: 'جمع کل',
 			actions: 'عملیات'
@@ -104,6 +105,7 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			deleteManual: 'حذف',
 			manualBadge: 'دستی',
 			gitBadge: 'ریپو',
+			editedBadge: 'ویرایش‌شده',
 			cancel: 'انصراف',
 			saveItem: 'افزودن به فاکتور',
 			selectEmail: 'انتخاب ایمیل',
@@ -134,7 +136,7 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			commits: 'Commits',
 			hours: 'Man-hours',
 			payment: 'Payment',
-			messages: 'Messages (summary)',
+			messages: 'Messages',
 			source: 'Source',
 			total: 'Total',
 			actions: 'Actions'
@@ -162,6 +164,7 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			deleteManual: 'Delete',
 			manualBadge: 'Manual',
 			gitBadge: 'Repo',
+			editedBadge: 'Edited',
 			cancel: 'Cancel',
 			saveItem: 'Add to invoice',
 			selectEmail: 'Select email',

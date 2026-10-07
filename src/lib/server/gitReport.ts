@@ -186,7 +186,7 @@ function parseCommits(
 				author: author.trim(),
 				email: email.trim(),
 				commit: hash.slice(0, 8),
-				message: message.trim().slice(0, 180),
+				message: message.trim(),
 				files: [],
 				added: 0,
 				deleted: 0
@@ -238,7 +238,7 @@ function mergeCloseSessions(commits: ReportCommit[], maxGapMinutes: number): Rep
 			current.original_commits.push(next.commit);
 			current.added += next.added;
 			current.deleted += next.deleted;
-			current.message += `  •  ${next.message.slice(0, 60)}`;
+			current.message += `  •  ${next.message}`;
 			current.dev_hours += next.dev_hours;
 			current.files = [...current.files, ...next.files];
 		} else {
@@ -280,13 +280,11 @@ function buildDailyRows(allCommits: ReportCommit[], params: ReportParams): Daily
 		let commitCount = 0;
 
 		for (const session of mergedDay) {
-			messages.push(session.message.slice(0, 80));
+			if (session.message) messages.push(session.message);
 			session.files.forEach((filename) => files.add(filename));
 			commitCount += session.commits_in_session;
 		}
 
-		let messageSummary = messages.join(' | ').slice(0, 220);
-		if (messages.length > 3) messageSummary += ' ...';
 		const fileList = [...files];
 		let fileSummary = fileList.slice(0, 5).join(', ');
 		if (files.size > 5) fileSummary += ` ... +${files.size - 5} فایل دیگر`;
@@ -299,7 +297,7 @@ function buildDailyRows(allCommits: ReportCommit[], params: ReportParams): Daily
 			sessions: mergedDay.length,
 			commits: commitCount,
 			hours: Number(totalDevHours.toFixed(2)),
-			messages: messageSummary,
+			messages: messages.join(' | '),
 			filesSample: fileSummary,
 			fileCount: files.size,
 			added: mergedDay.reduce((sum, session) => sum + session.added, 0),
@@ -450,7 +448,7 @@ export function dailyRowsToCsv(rows: DailyReportRow[]): string {
 		'تعداد سشن',
 		'تعداد کامیت',
 		'زمان_تخمینی_ساعت',
-		'پیام‌ها (خلاصه)',
+		'پیام‌ها',
 		'فایل‌ها (نمونه)',
 		'تعداد فایل کل',
 		'+خط کل',

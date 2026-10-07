@@ -39,11 +39,11 @@
 	"dependencies": {
 		"@sveltejs/adapter-node": "^6.0.0",
 		"better-sqlite3": "^13.0.3",
+		"exceljs": "^4.4.0",
 		"jquery": "^4.0.0",
 		"knex": "^3.3.0",
 		"nodemailer": "^10.0.16",
 		"sweetalert2": "^11.26.25",
-		"toastr": "^2.1.4",
-		"xlsx": "^0.18.5"
+		"toastr": "^2.1.4"
 	}
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance, type SubmitFunction } from '$app/forms';
 	import FormAlert from '#lib/components/FormAlert.svelte';
 	import Modal from '#lib/components/Modal.svelte';
 	import {
@@ -99,6 +100,24 @@
 	function closeHoursEdit() {
 		hoursEdit = null;
 	}
+
+	function restoreScroll(y: number) {
+		const apply = () => window.scrollTo({ top: y, left: 0, behavior: 'instant' });
+		apply();
+		requestAnimationFrame(() => {
+			apply();
+			requestAnimationFrame(apply);
+		});
+	}
+
+	const enhanceHoursEdit: SubmitFunction = () => {
+		const scrollY = window.scrollY;
+		return async ({ result, update }) => {
+			await update({ reset: false });
+			if (result.type === 'success') hoursEdit = null;
+			restoreScroll(scrollY);
+		};
+	};
 
 	const copy = $derived(getInvoiceCopy(locale));
 	const periodLabel = $derived(formatPeriodCount(invoice.periodMonths, locale));
@@ -366,15 +385,23 @@
 			</thead>
 			<tbody>
 				{#each invoice.lines as line (line.id)}
-					<tr class:invoice-line-manual={line.source === 'manual'}>
+					<tr
+						class:invoice-line-manual={line.source === 'manual'}
+						class:invoice-line-edited={line.hoursEdited}
+					>
 						<td class="mono">{line.row}</td>
 						<td>
 							<span
 								class="invoice-source-badge"
 								class:is-manual={line.source === 'manual'}
 								class:is-git={line.source !== 'manual'}
+								class:is-edited={line.hoursEdited}
 							>
-								{line.source === 'manual' ? copy.ui.manualBadge : copy.ui.gitBadge}
+								{line.hoursEdited
+									? copy.ui.editedBadge
+									: line.source === 'manual'
+										? copy.ui.manualBadge
+										: copy.ui.gitBadge}
 							</span>
 						</td>
 						<td class="ltr-input">{line.email}</td>
@@ -518,7 +545,14 @@
 	onclose={closeHoursEdit}
 >
 	{#if hoursEdit}
-		<form method="POST" action="?/updateHours" class="modal-stack" id="edit-hours-form">
+		<form
+			method="POST"
+			action="?/updateHours"
+			class="modal-stack"
+			id="edit-hours-form"
+			data-no-loader
+			use:enhance={enhanceHoursEdit}
+		>
 			<input type="hidden" name="line_id" value={hoursEdit.lineId} />
 			<p class="muted" style="margin: 0">
 				<span class="ltr-input">{hoursEdit.email}</span>
@@ -599,7 +633,10 @@
 						</thead>
 						<tbody>
 							{#each selectedShareLines as line (line.id)}
-								<tr class:invoice-line-manual={line.source === 'manual'}>
+								<tr
+									class:invoice-line-manual={line.source === 'manual'}
+									class:invoice-line-edited={line.hoursEdited}
+								>
 									<td class="mono cell-nowrap">{line.date}</td>
 									<td class="mono cell-nowrap">{line.period}</td>
 									<td class="muted">{line.repos || '—'}</td>

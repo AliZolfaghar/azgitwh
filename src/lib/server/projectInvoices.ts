@@ -27,6 +27,8 @@ export type InvoiceLine = {
 	payment: number;
 	messages: string;
 	source: InvoiceLineSource;
+	/** True when man-hours were manually changed after generation. */
+	hoursEdited: boolean;
 };
 
 export type InvoiceSummary = {
@@ -112,7 +114,8 @@ export function normalizeInvoiceLines(
 			hours,
 			payment: roundMoney(hours * rate),
 			messages: String(line.messages ?? '').trim(),
-			source: line.source === 'manual' ? ('manual' as const) : ('git' as const)
+			source: line.source === 'manual' ? ('manual' as const) : ('git' as const),
+			hoursEdited: Boolean(line.hoursEdited)
 		};
 	});
 
@@ -501,7 +504,8 @@ export async function addManualInvoiceLine(
 		hours: roundHours(hours),
 		payment: 0,
 		messages: String(input.messages ?? '').trim(),
-		source: 'manual'
+		source: 'manual',
+		hoursEdited: false
 	});
 
 	await persistInvoiceLines(projectId, invoiceId, Number(row.hourly_rate), existing);
@@ -540,6 +544,7 @@ export async function updateInvoiceLineHours(
 	}
 
 	target.hours = roundHours(hours);
+	target.hoursEdited = true;
 	await persistInvoiceLines(projectId, invoiceId, Number(row.hourly_rate), lines);
 	return { ok: true as const, message: 'نفرساعت ردیف به‌روز شد.' };
 }

@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	if (!invoice) error(404, 'فاکتور یافت نشد');
 
 	const locale = normalizeInvoiceLocale(url.searchParams.get('locale') ?? invoice.locale);
-	const buffer = buildInvoiceWorkbook(invoice, locale);
+	const buffer = await buildInvoiceWorkbook(invoice, locale);
 	const filename = invoiceExcelFilename(projectId, invoiceId, locale);
 	const body = new Uint8Array(buffer);
 

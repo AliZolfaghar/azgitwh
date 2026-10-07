@@ -1289,6 +1289,18 @@ html[data-theme='dark'] .invoice-line-manual td {
 	background: color-mix(in srgb, #f0a202 16%, var(--color-paper));
 }
 
+.invoice-line-edited td {
+	background: color-mix(in srgb, #2e7d32 12%, var(--color-paper));
+}
+
+html[data-theme='dark'] .invoice-line-edited td {
+	background: color-mix(in srgb, #66bb6a 18%, var(--color-paper));
+}
+
+.invoice-line-manual.invoice-line-edited td {
+	background: color-mix(in srgb, #2e7d32 10%, color-mix(in srgb, #f0a202 8%, var(--color-paper)));
+}
+
 .invoice-source-badge {
 	display: inline-block;
 	padding: 0.15rem 0.45rem;
@@ -1309,6 +1321,16 @@ html[data-theme='dark'] .invoice-line-manual td {
 	color: color-mix(in srgb, var(--color-primary-dark) 90%, #333);
 	border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
 	background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.invoice-source-badge.is-edited {
+	color: #1b5e20;
+	border-color: color-mix(in srgb, #2e7d32 55%, var(--color-border));
+	background: color-mix(in srgb, #2e7d32 16%, transparent);
+}
+
+html[data-theme='dark'] .invoice-source-badge.is-edited {
+	color: #a5d6a7;
 }
 
 .invoice-hours-cell {
