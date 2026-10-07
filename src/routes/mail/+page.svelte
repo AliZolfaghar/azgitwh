@@ -251,7 +251,7 @@
 									type="text"
 									name="from_name"
 									bind:value={fromName}
-									placeholder="azgitwh"
+									placeholder="git to invoice"
 								/>
 							</label>
 						</div>
@@ -333,7 +333,7 @@
 									type="text"
 									name="from_name"
 									bind:value={fromName}
-									placeholder="azgitwh"
+									placeholder="git to invoice"
 								/>
 							</label>
 						</div>

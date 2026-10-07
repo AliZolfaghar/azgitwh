@@ -11,7 +11,7 @@
 
 	const isAuthed = $derived(Boolean(data.user));
 	const docTitle = $derived(
-		page.data.pageTitle ? `${page.data.pageTitle} · azgitwh` : 'azgitwh'
+		page.data.pageTitle ? `${page.data.pageTitle} · git to invoice` : 'git to invoice'
 	);
 	/** Remount on route change and after login/logout so enter motion restarts. */
 	const pageKey = $derived(`${isAuthed ? 'in' : 'out'}:${page.url.pathname}`);

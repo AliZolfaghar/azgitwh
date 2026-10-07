@@ -111,7 +111,7 @@ export async function saveMailSettings(input: MailSettingsInput) {
 				username: normalized.username.trim() || current.username,
 				password,
 				from_email: normalized.from_email.trim() || current.from_email,
-				from_name: normalized.from_name.trim() || current.from_name || 'azgitwh',
+				from_name: normalized.from_name.trim() || current.from_name || 'git to invoice',
 				updated_at: new Date()
 			});
 		return { ok: true as const, message: 'ارسال ایمیل غیرفعال شد.' };
@@ -142,7 +142,7 @@ export async function saveMailSettings(input: MailSettingsInput) {
 			username: normalized.username.trim(),
 			password,
 			from_email: normalized.from_email.trim(),
-			from_name: normalized.from_name.trim() || 'azgitwh',
+			from_name: normalized.from_name.trim() || 'git to invoice',
 			updated_at: new Date()
 		});
 
@@ -237,7 +237,7 @@ export async function sendTestMail(to: string, override?: Partial<MailSettingsIn
 		password: merged.password!
 	});
 
-	const mail = buildTestMail(to.trim(), merged.from_name || 'azgitwh');
+	const mail = buildTestMail(to.trim(), merged.from_name || 'git to invoice');
 
 	try {
 		await transporter.sendMail({

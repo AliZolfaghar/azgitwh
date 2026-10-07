@@ -60,7 +60,7 @@ export function renderMailHtml(content: MailTemplateContent): string {
 		? `<p style="margin: 0 0 18px; color: #475569; font-size: 15px; line-height: 1.7;">${escapeHtml(content.intro)}</p>`
 		: '';
 	const footer = escapeHtml(
-		content.footerNote ?? 'این پیام به‌صورت خودکار از سامانه azgitwh ارسال شده است.'
+		content.footerNote ?? 'این پیام به‌صورت خودکار از سامانه git to invoice ارسال شده است.'
 	);
 	const year = new Date().getFullYear();
 
@@ -88,10 +88,10 @@ export function renderMailHtml(content: MailTemplateContent): string {
 										<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
 											<tr>
 												<td style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #1976d2, #1565c0); color: #ffffff; font: 700 13px Tahoma, Arial, sans-serif; text-align: center; vertical-align: middle;">
-													AZ
+													GTI
 												</td>
-												<td style="padding-right: 10px; color: #0f172a; font: 700 18px Tahoma, Arial, sans-serif;">
-													azgitwh
+												<td style="padding-right: 10px; color: #0f172a; font: 700 16px Tahoma, Arial, sans-serif;">
+													git to invoice
 												</td>
 											</tr>
 										</table>
@@ -140,7 +140,7 @@ export function renderMailHtml(content: MailTemplateContent): string {
 					</tr>
 					<tr>
 						<td style="padding: 16px 8px 0; text-align: center; color: #94a3b8; font: 11px Tahoma, Arial, sans-serif;">
-							© ${year} azgitwh
+							© ${year} git to invoice
 						</td>
 					</tr>
 				</table>
@@ -162,7 +162,7 @@ export function renderMailText(content: {
 		content.intro ?? '',
 		...(content.lines ?? []),
 		'',
-		content.footerNote ?? 'این پیام به‌صورت خودکار از سامانه azgitwh ارسال شده است.'
+		content.footerNote ?? 'این پیام به‌صورت خودکار از سامانه git to invoice ارسال شده است.'
 	].filter((line, index, arr) => line || (index > 0 && arr[index - 1]));
 
 	return parts.join('\n');
@@ -171,7 +171,7 @@ export function renderMailText(content: {
 /** Built-in test message used by mail settings. */
 export function buildTestMail(to: string, fromName: string) {
 	const heading = 'اتصال ایمیل برقرار است';
-	const intro = 'این یک پیام آزمایشی از سامانه azgitwh است. اگر این ایمیل را می‌بینید، تنظیمات SMTP درست کار می‌کند.';
+	const intro = 'این یک پیام آزمایشی از سامانه git to invoice است. اگر این ایمیل را می‌بینید، تنظیمات SMTP درست کار می‌کند.';
 	const bodyHtml = `
 		<p style="margin: 0 0 14px;">می‌توانید از همین تنظیمات برای ارسال اعلان‌ها و گزارش‌های بعدی استفاده کنید.</p>
 		<p style="margin: 0; padding: 12px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; color: #1e3a5f; font-size: 14px;">
@@ -180,12 +180,12 @@ export function buildTestMail(to: string, fromName: string) {
 
 	const html = renderMailHtml({
 		title: 'آزمایش ایمیل',
-		preheader: 'تست موفق اتصال SMTP در azgitwh',
+		preheader: 'تست موفق اتصال SMTP در git to invoice',
 		heading,
 		intro,
 		meta: [
 			{ label: 'گیرنده', value: to },
-			{ label: 'فرستنده', value: fromName || 'azgitwh' },
+			{ label: 'فرستنده', value: fromName || 'git to invoice' },
 			{
 				label: 'زمان',
 				value: new Intl.DateTimeFormat('fa-IR', {
@@ -201,12 +201,12 @@ export function buildTestMail(to: string, fromName: string) {
 	const text = renderMailText({
 		heading,
 		intro,
-		lines: [`گیرنده: ${to}`, `فرستنده: ${fromName || 'azgitwh'}`],
+		lines: [`گیرنده: ${to}`, `فرستنده: ${fromName || 'git to invoice'}`],
 		footerNote: 'این ایمیل فقط برای آزمایش تنظیمات ارسال شده است.'
 	});
 
 	return {
-		subject: 'آزمایش ایمیل azgitwh',
+		subject: 'آزمایش ایمیل git to invoice',
 		html,
 		text
 	};
@@ -272,7 +272,7 @@ export function buildAppMail(input: {
 
 export function buildPasswordResetMail(input: { to: string; resetUrl: string; expiresMinutes: number }) {
 	return buildAppMail({
-		subject: 'بازیابی کلمه عبور azgitwh',
+		subject: 'بازیابی کلمه عبور git to invoice',
 		heading: 'تنظیم مجدد کلمه عبور',
 		intro: 'درخواست بازیابی کلمه عبور برای حساب شما ثبت شد.',
 		paragraphs: [

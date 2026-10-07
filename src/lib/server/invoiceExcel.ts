@@ -78,7 +78,7 @@ export async function buildInvoiceWorkbook(
 	const isFa = locale === 'fa';
 
 	const workbook = new ExcelJS.Workbook();
-	workbook.creator = 'azgitwh';
+	workbook.creator = 'git to invoice';
 	workbook.created = new Date();
 	workbook.modified = new Date();
 
@@ -309,97 +309,6 @@ export async function buildInvoiceWorkbook(
 		}
 	});
 	sheet.mergeCells(`A${totalRowNumber}:F${totalRowNumber}`);
-
-	// Developer shares sheet
-	const sharesSheet = workbook.addWorksheet(isFa ? 'سهم‌ها' : 'Shares', {
-		views: [{ rightToLeft: isFa, showGridLines: false }],
-		properties: { defaultRowHeight: 18 }
-	});
-	sharesSheet.columns = [
-		{ width: 30 },
-		{ width: 10 },
-		{ width: 12 },
-		{ width: 12 },
-		{ width: 12 },
-		{ width: 14 }
-	];
-
-	sharesSheet.mergeCells('A1:F1');
-	const sharesTitle = sharesSheet.getCell('A1');
-	sharesTitle.value = copy.ui.developerSharesTitle;
-	sharesTitle.font = {
-		name: 'Calibri',
-		size: 14,
-		bold: true,
-		color: { argb: `FF${COLORS.primaryDark}` }
-	};
-	sharesTitle.alignment = { vertical: 'middle', horizontal: isFa ? 'right' : 'left' };
-	sharesSheet.getRow(1).height = 26;
-
-	const shareHeaders = [
-		copy.table.email,
-		copy.ui.rows,
-		copy.table.commits,
-		copy.table.hours,
-		copy.ui.sharePercent,
-		copy.table.payment
-	];
-	const shareHeaderRow = sharesSheet.getRow(3);
-	shareHeaderRow.height = 22;
-	shareHeaders.forEach((label, index) => {
-		const cell = shareHeaderRow.getCell(index + 1);
-		cell.value = label;
-		styleHeaderCell(cell);
-	});
-
-	const byEmail = new Map<
-		string,
-		{ email: string; rows: number; commits: number; hours: number; payment: number }
-	>();
-	for (const line of invoice.lines) {
-		const current = byEmail.get(line.email) ?? {
-			email: line.email,
-			rows: 0,
-			commits: 0,
-			hours: 0,
-			payment: 0
-		};
-		current.rows += 1;
-		current.commits += line.commits;
-		current.hours += line.hours;
-		current.payment += line.payment;
-		byEmail.set(line.email, current);
-	}
-
-	const shares = [...byEmail.values()].sort(
-		(a, b) => b.hours - a.hours || a.email.localeCompare(b.email)
-	);
-
-	shares.forEach((share, index) => {
-		const row = sharesSheet.getRow(4 + index);
-		row.height = 20;
-		const hoursShare = totalHours > 0 ? (share.hours / totalHours) * 100 : 0;
-		const values: (string | number)[] = [
-			share.email,
-			share.rows,
-			share.commits,
-			Number(share.hours.toFixed(2)),
-			Number(hoursShare.toFixed(1)),
-			share.payment > 0 ? Number(share.payment.toFixed(2)) : ''
-		];
-		values.forEach((value, colIndex) => {
-			const cell = row.getCell(colIndex + 1);
-			cell.value = value;
-			styleBodyCell(cell, { align: colIndex === 0 ? (isFa ? 'right' : 'left') : 'center' });
-			if (colIndex === 3 || colIndex === 5) {
-				if (typeof value === 'number') cell.numFmt = '#,##0.##';
-			}
-			if (colIndex === 4 && typeof value === 'number') {
-				cell.numFmt = '0.0"%"';
-			}
-		});
-		if (index % 2 === 1) applyFill(row, COLORS.zebra);
-	});
 
 	const buffer = await workbook.xlsx.writeBuffer();
 	return Buffer.from(buffer);

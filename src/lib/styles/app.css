@@ -146,19 +146,21 @@ button {
 	display: grid;
 	place-items: center;
 	font-weight: 700;
-	font-size: 0.85rem;
+	font-size: 0.78rem;
+	line-height: 1;
 	flex-shrink: 0;
 }
 
 .sidebar-brand-text {
-	font-size: 1.05rem;
+	font-size: 0.92rem;
 	font-weight: 500;
 	letter-spacing: 0.01em;
+	line-height: 1.2;
+	white-space: nowrap;
 }
 
 .sidebar.mini .sidebar-brand-text,
 .sidebar.mini .nav-label,
-.sidebar.mini .nav-search,
 .sidebar.mini .nav-group,
 .sidebar.mini .sidebar-user-meta {
 	display: none;
@@ -276,26 +278,6 @@ html[data-theme='dark'] .sidebar-logout-btn:hover {
 
 .sidebar.mini .sidebar-user-main {
 	justify-content: center;
-}
-
-.nav-search {
-	padding: 0.75rem 1rem 0.25rem;
-}
-
-.nav-search input {
-	width: 100%;
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius);
-	padding: 0.55rem 0.75rem;
-	font: inherit;
-	font-size: 0.875rem;
-	outline: none;
-	background: var(--color-paper);
-}
-
-.nav-search input:focus {
-	border-color: var(--color-primary);
-	box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
 }
 
 .nav-list {
@@ -1349,6 +1331,72 @@ html[data-theme='dark'] .invoice-source-badge.is-edited {
 
 .invoice-shares-hero strong.ltr-input {
 	font-size: 1.05rem;
+}
+
+.help-hero {
+	margin-bottom: 1rem;
+}
+
+.help-toc {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 0.65rem;
+	margin-top: 0.25rem;
+}
+
+.help-toc a {
+	display: inline-flex;
+	padding: 0.35rem 0.7rem;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius);
+	color: var(--color-text-secondary);
+	text-decoration: none;
+	font-size: 0.9rem;
+	background: color-mix(in srgb, var(--color-kbd) 40%, transparent);
+}
+
+.help-toc a:hover {
+	border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+	color: var(--color-primary-dark);
+}
+
+.help-section {
+	margin-top: 1rem;
+	padding: 1.2rem 1.35rem;
+}
+
+.help-heading {
+	margin: 0 0 0.75rem;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: var(--color-primary-dark);
+}
+
+html[data-theme='dark'] .help-heading {
+	color: var(--color-primary);
+}
+
+.help-section p {
+	margin: 0 0 0.75rem;
+	line-height: 1.75;
+	color: var(--color-text);
+}
+
+.help-list,
+.help-steps {
+	margin: 0;
+	padding-inline-start: 1.25rem;
+	display: grid;
+	gap: 0.45rem;
+	line-height: 1.7;
+}
+
+.help-section code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.88em;
+	padding: 0.1rem 0.35rem;
+	border-radius: 0.3rem;
+	background: color-mix(in srgb, var(--color-kbd) 70%, transparent);
 }
 
 .invoice-hours-form {

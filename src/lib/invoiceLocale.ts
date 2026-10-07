@@ -31,6 +31,10 @@ export type InvoiceCopy = {
 		regenerateConfirmTitle: string;
 		regenerateConfirmText: string;
 		deleteInvoice: string;
+		deleteInvoiceConfirmTitle: string;
+		deleteInvoiceConfirmText: string;
+		deleteManualConfirmTitle: string;
+		deleteManualConfirmText: string;
 		backToInvoices: string;
 		issuedAt: string;
 		currency: string;
@@ -92,6 +96,10 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			regenerateConfirmText:
 				'ردیف‌های ریپو با پارامترهای فعلی دوباره محاسبه می‌شوند. ردیف‌های دستی می‌مانند، اما ویرایش نفرساعت روی ردیف‌های ریپو بازنویسی می‌شود.',
 			deleteInvoice: 'حذف فاکتور',
+			deleteInvoiceConfirmTitle: 'حذف فاکتور؟',
+			deleteInvoiceConfirmText: 'این فاکتور و همهٔ ردیف‌هایش برای همیشه حذف می‌شوند.',
+			deleteManualConfirmTitle: 'حذف ردیف دستی؟',
+			deleteManualConfirmText: 'این ردیف از فاکتور حذف می‌شود.',
 			backToInvoices: '← بازگشت به فاکتورها',
 			issuedAt: 'صادرشده',
 			currency: 'ارز',
@@ -151,6 +159,10 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			regenerateConfirmText:
 				'Repo rows will be recalculated with current parameters. Manual rows are kept, but hour edits on repo rows will be overwritten.',
 			deleteInvoice: 'Delete invoice',
+			deleteInvoiceConfirmTitle: 'Delete invoice?',
+			deleteInvoiceConfirmText: 'This invoice and all its rows will be permanently deleted.',
+			deleteManualConfirmTitle: 'Delete manual row?',
+			deleteManualConfirmText: 'This row will be removed from the invoice.',
 			backToInvoices: '← Back to invoices',
 			issuedAt: 'Issued',
 			currency: 'Currency',

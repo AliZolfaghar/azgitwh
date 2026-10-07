@@ -15,7 +15,7 @@
 
 	<section class="login-card paper">
 		<div class="login-brand">
-			<div class="sidebar-brand-mark">AZ</div>
+			<div class="sidebar-brand-mark">GTI</div>
 			<div>
 				<h1>بازیابی کلمه عبور</h1>
 				<p class="muted">لینک تغییر رمز به ایمیل شما ارسال می‌شود.</p>

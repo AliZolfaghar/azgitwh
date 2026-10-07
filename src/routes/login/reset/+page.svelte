@@ -18,7 +18,7 @@
 
 	<section class="login-card paper">
 		<div class="login-brand">
-			<div class="sidebar-brand-mark">AZ</div>
+			<div class="sidebar-brand-mark">GTI</div>
 			<div>
 				<h1>کلمه عبور جدید</h1>
 				<p class="muted">رمز جدید حساب خود را وارد کنید.</p>

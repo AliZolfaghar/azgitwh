@@ -24,9 +24,9 @@
 
 	<section class="login-card paper">
 		<div class="login-brand">
-			<div class="sidebar-brand-mark">AZ</div>
+			<div class="sidebar-brand-mark">GTI</div>
 			<div>
-				<h1>ورود به azgitwh</h1>
+				<h1>ورود به git to invoice</h1>
 				<p class="muted">تخمین نفرساعت از روی تاریخچهٔ Git</p>
 			</div>
 		</div>

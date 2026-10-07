@@ -165,8 +165,15 @@
 		URL.revokeObjectURL(url);
 	}
 
+	/** Native submit bypasses listeners; use only after confirm on data-no-loader forms. */
+	function submitAfterConfirm(form: HTMLFormElement) {
+		HTMLFormElement.prototype.submit.call(form);
+	}
+
 	async function onRegenerateSubmit(event: SubmitEvent) {
 		event.preventDefault();
+		event.stopImmediatePropagation();
+		const form = event.currentTarget as HTMLFormElement;
 		const confirmed = await confirmAction({
 			title: copy.ui.regenerateConfirmTitle,
 			text: copy.ui.regenerateConfirmText,
@@ -174,7 +181,37 @@
 			cancelText: copy.ui.cancel
 		});
 		if (!confirmed) return;
-		(event.currentTarget as HTMLFormElement).submit();
+		submitAfterConfirm(form);
+	}
+
+	async function onDeleteInvoiceSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		event.stopImmediatePropagation();
+		const form = event.currentTarget as HTMLFormElement;
+		const confirmed = await confirmAction({
+			title: copy.ui.deleteInvoiceConfirmTitle,
+			text: copy.ui.deleteInvoiceConfirmText,
+			confirmText: copy.ui.deleteInvoice,
+			cancelText: copy.ui.cancel,
+			danger: true
+		});
+		if (!confirmed) return;
+		submitAfterConfirm(form);
+	}
+
+	async function onDeleteLineSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		event.stopImmediatePropagation();
+		const form = event.currentTarget as HTMLFormElement;
+		const confirmed = await confirmAction({
+			title: copy.ui.deleteManualConfirmTitle,
+			text: copy.ui.deleteManualConfirmText,
+			confirmText: copy.ui.deleteManual,
+			cancelText: copy.ui.cancel,
+			danger: true
+		});
+		if (!confirmed) return;
+		submitAfterConfirm(form);
 	}
 
 	function formatDate(value: string) {
@@ -295,7 +332,7 @@
 					</button>
 				</form>
 			</div>
-			<form method="POST" action="?/regenerate" onsubmit={onRegenerateSubmit}>
+			<form method="POST" action="?/regenerate" data-no-loader onsubmit={onRegenerateSubmit}>
 				<button type="submit" class="btn-primary">{copy.ui.regenerate}</button>
 			</form>
 			<button type="button" class="btn-secondary" onclick={openShares}>
@@ -305,7 +342,7 @@
 			<button type="button" class="btn-secondary" onclick={downloadExcel}>
 				{copy.ui.downloadExcel}
 			</button>
-			<form method="POST" action="?/delete">
+			<form method="POST" action="?/delete" data-no-loader onsubmit={onDeleteInvoiceSubmit}>
 				<button type="submit" class="btn-danger">{copy.ui.deleteInvoice}</button>
 			</form>
 		</div>
@@ -425,7 +462,12 @@
 						<td class="muted">{line.messages || '—'}</td>
 						<td>
 							{#if line.source === 'manual'}
-								<form method="POST" action="?/deleteLine">
+								<form
+									method="POST"
+									action="?/deleteLine"
+									data-no-loader
+									onsubmit={onDeleteLineSubmit}
+								>
 									<input type="hidden" name="line_id" value={line.id} />
 									<button type="submit" class="btn-danger btn-compact">{copy.ui.deleteManual}</button>
 								</form>

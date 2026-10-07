@@ -5,10 +5,9 @@
 	import type { Snippet } from 'svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import {
-		iconClock,
 		iconDashboard,
-		iconDatabase,
 		iconFolder,
+		iconHelp,
 		iconLogout,
 		iconMail,
 		iconMenu,
@@ -47,7 +46,8 @@
 		{ href: '/params', label: 'پارامترها', icon: iconSettings },
 		{ href: '/users', label: 'کاربران', icon: iconUsers },
 		{ href: '/mail', label: 'ایمیل', icon: iconMail },
-		{ href: '/profile', label: 'پروفایل من', icon: iconUser }
+		{ href: '/profile', label: 'پروفایل من', icon: iconUser },
+		{ href: '/help', label: 'راهنمای استفاده', icon: iconHelp }
 	];
 
 	function toggleSidebar() {
@@ -70,7 +70,7 @@
 					(item.href === page.url.pathname ||
 						(item.href !== '/' && page.url.pathname.startsWith(`${item.href}/`)))
 			)?.label ??
-			'azgitwh'
+			'git to invoice'
 	);
 
 	const displayName = $derived(userName.trim() || userEmail);
@@ -91,9 +91,9 @@
 		aria-label="منوی اصلی"
 	>
 		<div class="sidebar-brand">
-			<div class="sidebar-brand-mark">AZ</div>
+			<div class="sidebar-brand-mark">GTI</div>
 			{#if expanded}
-				<span class="sidebar-brand-text">azgitwh</span>
+				<span class="sidebar-brand-text">git to invoice</span>
 			{/if}
 		</div>
 
@@ -119,12 +119,7 @@
 			</form>
 		</div>
 
-		<div class="nav-search">
-			<input type="search" placeholder="جستجو…" aria-label="جستجو در منو" disabled />
-		</div>
-
 		<ul class="nav-list">
-			<li class="nav-group">MAIN</li>
 			{#each navItems as item}
 				<li class="nav-item">
 					{#if item.disabled}
@@ -149,20 +144,6 @@
 					{/if}
 				</li>
 			{/each}
-
-			<li class="nav-group">STATUS</li>
-			<li class="nav-item">
-				<button type="button" class="nav-link" disabled>
-					<span class="nav-icon">{@html iconDatabase}</span>
-					<span class="nav-label">SQLite آماده</span>
-				</button>
-			</li>
-			<li class="nav-item">
-				<button type="button" class="nav-link" disabled>
-					<span class="nav-icon">{@html iconClock}</span>
-					<span class="nav-label">گام‌به‌گام</span>
-				</button>
-			</li>
 		</ul>
 	</aside>
 
