@@ -89,7 +89,7 @@
 						<th style="width: 6rem">نوع</th>
 						<th>مسیر / آدرس</th>
 						<th style="width: 7rem">شاخه</th>
-						<th style="width: 5rem">فعال</th>
+						<th style="width: 6.5rem">فعال</th>
 						<th style="width: 10rem">عملیات</th>
 					</tr>
 				</thead>
@@ -107,11 +107,25 @@
 									{repo.kind === 'local' ? 'محلی' : 'آنلاین'}
 								</span>
 							</td>
-							<td class="ltr-input" style="border: 0; padding: 0; background: transparent">
-								{repo.location}
-							</td>
+							<td class="ltr-input">{repo.location}</td>
 							<td class="muted">{repo.branch || '—'}</td>
-							<td>{repo.enabled ? 'بله' : 'خیر'}</td>
+							<td>
+								<form method="POST" action="?/toggleEnabled" class="switch-form">
+									<input type="hidden" name="id" value={repo.id} />
+									<label class="switch" title={repo.enabled ? 'فعال' : 'غیرفعال'}>
+										<input
+											type="checkbox"
+											name="enabled"
+											checked={repo.enabled}
+											onchange={(event) => event.currentTarget.form?.requestSubmit()}
+										/>
+										<span class="switch-track" aria-hidden="true">
+											<span class="switch-thumb"></span>
+										</span>
+										<span class="sr-only">{repo.enabled ? 'فعال' : 'غیرفعال'}</span>
+									</label>
+								</form>
+							</td>
 							<td>
 								<div class="row-actions">
 									<button type="button" class="btn-secondary" onclick={() => openEdit(repo)}>

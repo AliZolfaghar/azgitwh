@@ -196,6 +196,33 @@ export async function updateRepository(
 	return { ok: true as const };
 }
 
+export async function setRepositoryEnabled(
+	projectId: number,
+	repoId: number,
+	enabled: boolean
+) {
+	if (!Number.isInteger(repoId) || repoId < 1) {
+		return { ok: false as const, message: 'شناسه ریپازیتوری نامعتبر است.' };
+	}
+
+	const db = await getDb();
+	const updated = await db('project_repositories')
+		.where({ id: repoId, project_id: projectId })
+		.update({
+			enabled: Boolean(enabled),
+			updated_at: new Date()
+		});
+
+	if (!updated) {
+		return { ok: false as const, message: 'ریپازیتوری یافت نشد.' };
+	}
+
+	return {
+		ok: true as const,
+		message: enabled ? 'ریپازیتوری فعال شد.' : 'ریپازیتوری غیرفعال شد.'
+	};
+}
+
 export async function deleteRepository(projectId: number, repoId: number) {
 	const db = await getDb();
 	const deleted = await db('project_repositories')

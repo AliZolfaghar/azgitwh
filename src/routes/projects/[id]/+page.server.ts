@@ -3,6 +3,7 @@ import {
 	addRepository,
 	deleteRepository,
 	listProjectRepositories,
+	setRepositoryEnabled,
 	updateRepository,
 	type RepoKind
 } from '#lib/server/repositories.js';
@@ -101,5 +102,19 @@ export const actions: Actions = {
 			return fail(400, { action: 'delete', id: repoId, message: result.message });
 		}
 		return { action: 'delete', success: true as const, message: 'ریپازیتوری حذف شد.' };
+	},
+
+	toggleEnabled: async ({ request, params }) => {
+		const projectId = parseId(params.id);
+		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+
+		const form = await request.formData();
+		const repoId = Number(form.get('id'));
+		const enabled = form.get('enabled') === 'on' || form.get('enabled') === 'true';
+		const result = await setRepositoryEnabled(projectId, repoId, enabled);
+		if (!result.ok) {
+			return fail(400, { action: 'toggleEnabled', id: repoId, message: result.message });
+		}
+		return { action: 'toggleEnabled', success: true as const, message: result.message };
 	}
 };
