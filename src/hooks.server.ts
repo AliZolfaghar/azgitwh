@@ -8,20 +8,22 @@ export const init: ServerInit = async () => {
 	await getDb();
 };
 
+function isPublicPath(path: string) {
+	return path === '/logout' || path === '/login' || path.startsWith('/login/');
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	const user = await getUserFromSession(event.cookies);
 	event.locals.user = user;
 
 	const path = event.url.pathname;
-	const isLogin = path === '/login';
-	const isLogout = path === '/logout';
 
-	if (!user && !isLogin && !isLogout) {
+	if (!user && !isPublicPath(path)) {
 		const from = path === '/' ? '' : `?from=${encodeURIComponent(path)}`;
 		redirect(303, `/login${from}`);
 	}
 
-	if (user && isLogin) {
+	if (user && (path === '/login' || path.startsWith('/login/'))) {
 		redirect(303, '/');
 	}
 

@@ -715,6 +715,39 @@ a.header-user:hover {
 	gap: 1rem;
 }
 
+.login-password-label {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.login-forgot {
+	font-size: 0.82rem;
+	color: var(--color-primary);
+	text-decoration: none;
+}
+
+.login-forgot:hover {
+	text-decoration: underline;
+}
+
+.login-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.1rem;
+	margin: 1rem 0 0;
+	font-size: 0.9rem;
+}
+
+.login-links a {
+	color: var(--color-primary);
+}
+
+.login-links a:hover {
+	text-decoration: underline;
+}
+
 .field {
 	display: grid;
 	gap: 0.4rem;

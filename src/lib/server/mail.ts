@@ -2,6 +2,12 @@ import nodemailer from 'nodemailer';
 import { getDb } from './db.js';
 import { buildTestMail } from './mailTemplate.js';
 
+export type OutboundMail = {
+	subject: string;
+	html: string;
+	text: string;
+};
+
 export type MailProvider = 'smtp' | 'gmail';
 
 export type MailSettings = {
@@ -247,6 +253,45 @@ export async function sendTestMail(to: string, override?: Partial<MailSettingsIn
 	} catch (error) {
 		const detail = error instanceof Error ? error.message : String(error);
 		return { ok: false as const, message: `ارسال ناموفق: ${detail}` };
+	} finally {
+		transporter.close();
+	}
+}
+
+/** Send using saved mail settings (must be enabled). */
+export async function sendAppMail(to: string, mail: OutboundMail) {
+	const settings = await getMailSettings();
+	if (!settings.enabled) {
+		return {
+			ok: false as const,
+			message: 'ارسال ایمیل در تنظیمات غیرفعال است. با مدیر سیستم تماس بگیرید.'
+		};
+	}
+	if (!settings.host.trim() || !settings.password || !settings.from_email.trim()) {
+		return {
+			ok: false as const,
+			message: 'تنظیمات ایمیل ناقص است. با مدیر سیستم تماس بگیرید.'
+		};
+	}
+	if (!to.trim()) {
+		return { ok: false as const, message: 'گیرنده نامعتبر است.' };
+	}
+
+	const transporter = createTransport(settings);
+	try {
+		await transporter.sendMail({
+			from: settings.from_name
+				? `"${settings.from_name}" <${settings.from_email}>`
+				: settings.from_email,
+			to: to.trim(),
+			subject: mail.subject,
+			text: mail.text,
+			html: mail.html
+		});
+		return { ok: true as const };
+	} catch (error) {
+		const detail = error instanceof Error ? error.message : String(error);
+		return { ok: false as const, message: `ارسال ایمیل ناموفق بود: ${detail}` };
 	} finally {
 		transporter.close();
 	}

@@ -1,12 +1,21 @@
 <script lang="ts">
 	import FormAlert from '#lib/components/FormAlert.svelte';
 	import ThemeToggle from '#lib/components/layout/ThemeToggle.svelte';
+	import { page } from '$app/state';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	const resetDone = $derived(page.url.searchParams.get('reset') === '1');
 </script>
 
 <FormAlert {form} />
+
+{#if resetDone}
+	<div class="banner banner-ok" style="max-width: 420px; margin: 0 auto 1rem">
+		کلمه عبور به‌روزرسانی شد. اکنون وارد شوید.
+	</div>
+{/if}
 
 <div class="login-page">
 	<div class="login-toolbar">
@@ -39,7 +48,10 @@
 			</label>
 
 			<label class="field">
-				<span>کلمه عبور</span>
+				<span class="login-password-label">
+					<span>کلمه عبور</span>
+					<a href="/login/forgot" class="login-forgot">فراموشی رمز؟</a>
+				</span>
 				<input
 					type="password"
 					name="password"

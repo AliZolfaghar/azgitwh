@@ -212,22 +212,39 @@ export function buildTestMail(to: string, fromName: string) {
 	};
 }
 
-/** Helper for future transactional emails — wrap any content in the shared theme. */
+function actionButton(action: { label: string; url: string } | undefined) {
+	if (!action) return '';
+	const url = escapeHtml(action.url);
+	const label = escapeHtml(action.label);
+	return `
+		<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 18px 0 8px; border-collapse: collapse;">
+			<tr>
+				<td style="border-radius: 8px; background: #1565c0;">
+					<a href="${url}" style="display: inline-block; padding: 12px 22px; color: #ffffff; font: 700 14px Tahoma, Arial, sans-serif; text-decoration: none;">
+						${label}
+					</a>
+				</td>
+			</tr>
+		</table>
+		<p style="margin: 10px 0 0; color: #64748b; font-size: 12px; line-height: 1.6; direction: ltr; text-align: left; word-break: break-all;">
+			${url}
+		</p>`;
+}
+
+/** Helper for transactional emails — wrap any content in the shared theme. */
 export function buildAppMail(input: {
 	subject: string;
 	heading: string;
 	intro?: string;
 	paragraphs?: string[];
 	meta?: Array<{ label: string; value: string }>;
+	action?: { label: string; url: string };
 	footerNote?: string;
 }) {
 	const paragraphs = input.paragraphs ?? [];
-	const bodyHtml = paragraphs
-		.map(
-			(p) =>
-				`<p style="margin: 0 0 12px;">${escapeHtml(p)}</p>`
-		)
-		.join('');
+	const bodyHtml =
+		paragraphs.map((p) => `<p style="margin: 0 0 12px;">${escapeHtml(p)}</p>`).join('') +
+		actionButton(input.action);
 
 	return {
 		subject: input.subject,
@@ -245,9 +262,25 @@ export function buildAppMail(input: {
 			intro: input.intro,
 			lines: [
 				...paragraphs,
-				...(input.meta ?? []).map((m) => `${m.label}: ${m.value}`)
+				...(input.meta ?? []).map((m) => `${m.label}: ${m.value}`),
+				...(input.action ? [`${input.action.label}: ${input.action.url}`] : [])
 			],
 			footerNote: input.footerNote
 		})
 	};
+}
+
+export function buildPasswordResetMail(input: { to: string; resetUrl: string; expiresMinutes: number }) {
+	return buildAppMail({
+		subject: 'بازیابی کلمه عبور azgitwh',
+		heading: 'تنظیم مجدد کلمه عبور',
+		intro: 'درخواست بازیابی کلمه عبور برای حساب شما ثبت شد.',
+		paragraphs: [
+			`اگر این درخواست از سمت شما بوده، روی دکمه زیر بزنید. لینک تا ${input.expiresMinutes} دقیقه معتبر است.`,
+			'اگر شما این درخواست را نداده‌اید، این ایمیل را نادیده بگیرید.'
+		],
+		meta: [{ label: 'حساب', value: input.to }],
+		action: { label: 'تغییر کلمه عبور', url: input.resetUrl },
+		footerNote: 'این لینک یک‌بارمصرف است و پس از استفاده یا انقضا باطل می‌شود.'
+	});
 }
