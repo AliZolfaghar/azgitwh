@@ -1315,6 +1315,20 @@ html[data-theme='dark'] .invoice-line-manual td {
 	min-width: 4.5rem;
 }
 
+.invoice-shares {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.invoice-shares-detail {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.invoice-shares-hero strong.ltr-input {
+	font-size: 1.05rem;
+}
+
 .invoice-hours-form {
 	display: inline-flex;
 	align-items: center;

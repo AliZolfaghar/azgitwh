@@ -48,6 +48,13 @@ export type InvoiceCopy = {
 		saveItem: string;
 		selectEmail: string;
 		otherEmail: string;
+		developerShares: string;
+		developerSharesTitle: string;
+		sharePercent: string;
+		rows: string;
+		developersCount: (n: number) => string;
+		viewDeveloper: string;
+		allDevelopers: string;
 	};
 };
 
@@ -100,7 +107,14 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			cancel: 'انصراف',
 			saveItem: 'افزودن به فاکتور',
 			selectEmail: 'انتخاب ایمیل',
-			otherEmail: 'ایمیل دیگر…'
+			otherEmail: 'ایمیل دیگر…',
+			developerShares: 'سهم برنامه‌نویس‌ها',
+			developerSharesTitle: 'سهم هر برنامه‌نویس',
+			sharePercent: 'سهم',
+			rows: 'ردیف',
+			developersCount: (n) => `${n} نفر`,
+			viewDeveloper: 'مشاهده',
+			allDevelopers: '← همه برنامه‌نویس‌ها'
 		}
 	},
 	en: {
@@ -151,7 +165,14 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			cancel: 'Cancel',
 			saveItem: 'Add to invoice',
 			selectEmail: 'Select email',
-			otherEmail: 'Other email…'
+			otherEmail: 'Other email…',
+			developerShares: 'Developer shares',
+			developerSharesTitle: 'Share per developer',
+			sharePercent: 'Share',
+			rows: 'Rows',
+			developersCount: (n) => `${n} developers`,
+			viewDeveloper: 'View',
+			allDevelopers: '← All developers'
 		}
 	}
 };
