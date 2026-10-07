@@ -44,7 +44,7 @@
 	const navItems: NavItem[] = [
 		{ href: '/', label: 'داشبورد', icon: iconDashboard },
 		{ href: '/projects', label: 'پروژه‌ها', icon: iconFolder },
-		{ href: '#params', label: 'پارامترها', icon: iconSettings, disabled: true },
+		{ href: '/params', label: 'پارامترها', icon: iconSettings },
 		{ href: '/users', label: 'کاربران', icon: iconUsers },
 		{ href: '/mail', label: 'ایمیل', icon: iconMail },
 		{ href: '/profile', label: 'پروفایل من', icon: iconUser }
@@ -64,7 +64,12 @@
 
 	const pageTitle = $derived(
 		page.data.pageTitle ??
-			navItems.find((item) => !item.disabled && item.href === page.url.pathname)?.label ??
+			navItems.find(
+				(item) =>
+					!item.disabled &&
+					(item.href === page.url.pathname ||
+						(item.href !== '/' && page.url.pathname.startsWith(`${item.href}/`)))
+			)?.label ??
 			'azgitwh'
 	);
 
@@ -130,7 +135,12 @@
 					{:else}
 						<a
 							href={item.href}
-							class:active={page.url.pathname === item.href}
+							class:active={
+								item.href === '/'
+									? page.url.pathname === '/'
+									: page.url.pathname === item.href ||
+										page.url.pathname.startsWith(`${item.href}/`)
+							}
 							onclick={closeMobile}
 						>
 							<span class="nav-icon">{@html item.icon}</span>

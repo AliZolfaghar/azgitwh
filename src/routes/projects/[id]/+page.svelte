@@ -73,6 +73,7 @@
 		<h2 class="section-title">ریپازیتوری‌های این پروژه</h2>
 		<div class="toolbar-actions">
 			<span class="muted">{data.repositories.length} مورد</span>
+			<a class="btn-secondary" href="/projects/{data.project.id}/invoice">فاکتور</a>
 			<button type="button" class="btn-primary" onclick={openCreate}>افزودن ریپازیتوری</button>
 		</div>
 	</div>

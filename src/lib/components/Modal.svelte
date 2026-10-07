@@ -14,6 +14,17 @@
 
 	let { open, title, onclose, children, footer, wide = false }: Props = $props();
 
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		document.body.classList.add('modal-open');
+		return {
+			destroy() {
+				document.body.classList.remove('modal-open');
+				node.remove();
+			}
+		};
+	}
+
 	function onKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') onclose();
 	}
@@ -34,6 +45,7 @@
 				onclose();
 			}
 		}}
+		use:portal
 		transition:fade={fadeFast}
 	>
 		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

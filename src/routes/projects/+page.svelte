@@ -87,7 +87,7 @@
 						<th>توضیحات</th>
 						<th style="width: 5rem">ریپوها</th>
 						<th style="width: 9rem">ایجاد</th>
-						<th style="width: 12rem">عملیات</th>
+						<th style="width: 16rem">عملیات</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -101,6 +101,7 @@
 							<td class="muted">{formatDate(project.createdAt)}</td>
 							<td>
 								<div class="row-actions">
+									<a class="btn-primary" href="/projects/{project.id}/invoice">فاکتور</a>
 									<a class="btn-secondary" href="/projects/{project.id}">ریپوها</a>
 									<button
 										type="button"

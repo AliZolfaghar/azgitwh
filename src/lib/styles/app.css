@@ -37,7 +37,7 @@
 	}
 	to {
 		opacity: 1;
-		transform: translateY(0);
+		transform: none;
 	}
 }
 
@@ -785,6 +785,29 @@ a.header-user:hover {
 	color: var(--color-text-secondary);
 }
 
+.field-hint {
+	display: block;
+	margin: 0;
+	font-size: 0.8rem;
+	line-height: 1.55;
+	color: var(--color-text-secondary);
+	opacity: 0.92;
+}
+
+.params-grid {
+	align-items: start;
+}
+
+.field-toggle {
+	align-content: start;
+}
+
+.params-toggle {
+	min-height: 2.55rem;
+	width: fit-content;
+	padding: 0 0.15rem;
+}
+
 .field input {
 	width: 100%;
 	border: 1px solid var(--color-border);
@@ -939,6 +962,10 @@ html[data-theme='dark'] .banner-error {
 	box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
 }
 
+.cell-nowrap {
+	white-space: nowrap;
+}
+
 .mono {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: 0.85rem;
@@ -1017,6 +1044,7 @@ html[data-theme='dark'] .btn-secondary {
 	text-decoration: underline;
 }
 
+a.btn-primary,
 a.btn-secondary {
 	display: inline-flex;
 	align-items: center;
@@ -1192,6 +1220,253 @@ html[data-theme='dark'] .kind-remote {
 	display: grid;
 	gap: 1rem;
 	max-width: 1100px;
+}
+
+.report-run-form {
+	display: grid;
+	grid-template-columns: minmax(9rem, 1fr) minmax(9rem, 1fr) auto auto;
+	gap: 0.75rem;
+	align-items: end;
+}
+
+.report-create-form {
+	display: grid;
+	grid-template-columns: minmax(0, 1.4fr) minmax(9rem, 1fr) minmax(9rem, 1fr);
+	gap: 0.75rem 1rem;
+	align-items: end;
+}
+
+.invoice-create-form {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(9rem, 1fr) minmax(8rem, 0.8fr);
+	gap: 0.75rem 1rem;
+	align-items: end;
+}
+
+.invoice-issue-form {
+	display: grid;
+	grid-template-columns: minmax(0, 1.3fr) minmax(8.5rem, 1fr) minmax(8.5rem, 1fr) minmax(8rem, 1fr) minmax(7rem, 0.8fr);
+	gap: 0.75rem 1rem;
+	align-items: end;
+}
+
+.invoice-lang-switch {
+	display: inline-flex;
+	gap: 0.35rem;
+	align-items: center;
+}
+
+.invoice-lang-switch form {
+	margin: 0;
+}
+
+.invoice-lang-switch .btn-secondary.is-active {
+	border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+	background: color-mix(in srgb, var(--color-primary) 14%, var(--color-paper));
+	color: var(--color-primary-dark);
+	font-weight: 700;
+}
+
+html[data-theme='dark'] .invoice-lang-switch .btn-secondary.is-active {
+	color: var(--color-primary);
+}
+
+.invoice-sheet[data-invoice-lang='en'] {
+	text-align: left;
+}
+
+.invoice-sheet[data-invoice-lang='en'] .mail-card-head,
+.invoice-sheet[data-invoice-lang='en'] .table-toolbar,
+.invoice-sheet[data-invoice-lang='en'] .report-detail-actions {
+	direction: ltr;
+}
+
+.invoice-line-manual td {
+	background: color-mix(in srgb, #f0a202 10%, var(--color-paper));
+}
+
+html[data-theme='dark'] .invoice-line-manual td {
+	background: color-mix(in srgb, #f0a202 16%, var(--color-paper));
+}
+
+.invoice-source-badge {
+	display: inline-block;
+	padding: 0.15rem 0.45rem;
+	border-radius: 0.35rem;
+	font-size: 0.78rem;
+	font-weight: 700;
+	border: 1px solid var(--color-border);
+	white-space: nowrap;
+}
+
+.invoice-source-badge.is-manual {
+	color: #8a5a00;
+	border-color: color-mix(in srgb, #f0a202 55%, var(--color-border));
+	background: color-mix(in srgb, #f0a202 18%, transparent);
+}
+
+.invoice-source-badge.is-git {
+	color: color-mix(in srgb, var(--color-primary-dark) 90%, #333);
+	border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+	background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.invoice-hours-cell {
+	min-width: 4.5rem;
+}
+
+.invoice-hours-form {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	margin: 0;
+}
+
+.invoice-hours-input {
+	width: 5.5rem;
+	min-width: 5.5rem;
+	padding: 0.35rem 0.45rem;
+}
+
+.invoice-hours-value {
+	display: inline-block;
+	margin: 0;
+	padding: 0.2rem 0.35rem;
+	border: 1px dashed transparent;
+	border-radius: 0.3rem;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+	text-align: inherit;
+}
+
+.invoice-hours-value:hover {
+	border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+	background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.btn-compact {
+	padding: 0.35rem 0.55rem;
+	font-size: 0.82rem;
+	white-space: nowrap;
+}
+
+.invoice-summary-wrap {
+	margin-top: 1.1rem;
+	overflow-x: auto;
+}
+
+.invoice-summary-table {
+	width: min(100%, 36rem);
+	border-collapse: collapse;
+	font-size: 0.95rem;
+}
+
+.invoice-summary-table th,
+.invoice-summary-table td {
+	border: 1px solid var(--color-border);
+	padding: 0.55rem 0.75rem;
+	vertical-align: middle;
+}
+
+.invoice-summary-table th {
+	width: 8.5rem;
+	text-align: start;
+	font-weight: 700;
+	background: color-mix(in srgb, var(--color-kbd) 55%, transparent);
+	white-space: nowrap;
+}
+
+.invoice-summary-table td:nth-child(2) {
+	min-width: 7rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.invoice-summary-table td:nth-child(3) {
+	min-width: 8rem;
+}
+
+.report-create-actions {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+}
+
+.report-detail-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.55rem;
+	align-items: center;
+}
+
+.report-detail-actions form {
+	margin: 0;
+}
+
+.report-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+	gap: 0.75rem;
+}
+
+.report-stat {
+	display: grid;
+	gap: 0.25rem;
+	padding: 0.85rem 0.95rem;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius);
+	background: color-mix(in srgb, var(--color-kbd) 55%, transparent);
+}
+
+.report-stat strong {
+	font-size: 1.15rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.data-table tfoot td {
+	border-bottom: 0;
+	border-top: 2px solid var(--color-border);
+	background: color-mix(in srgb, var(--color-kbd) 70%, transparent);
+	padding-block: 0.85rem;
+}
+
+.report-total-row td {
+	font-weight: 600;
+}
+
+.report-grand-total {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem 1.25rem;
+	margin-top: 1rem;
+	padding: 1rem 1.15rem;
+	border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+	border-radius: var(--radius);
+	background: color-mix(in srgb, var(--color-primary) 8%, var(--color-paper));
+}
+
+.report-grand-total strong {
+	font-size: 1.35rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-primary-dark);
+}
+
+html[data-theme='dark'] .report-grand-total strong {
+	color: var(--color-primary);
+}
+
+@media (max-width: 720px) {
+	.report-run-form,
+	.report-create-form,
+	.invoice-create-form,
+	.invoice-issue-form {
+		grid-template-columns: 1fr;
+	}
 }
 
 .mail-status {
@@ -1542,13 +1817,20 @@ html[data-theme='dark'] .kind-remote {
 	}
 }
 
+body.modal-open {
+	overflow: hidden;
+}
+
 .modal-backdrop {
 	position: fixed;
 	inset: 0;
 	z-index: 1400;
 	display: grid;
 	place-items: center;
+	align-content: center;
+	justify-items: center;
 	padding: 1rem;
+	overflow: auto;
 	background: rgba(0, 0, 0, 0.45);
 	backdrop-filter: blur(2px);
 }
