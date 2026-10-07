@@ -14,11 +14,9 @@ export function wireBusyForms(root: ParentNode): () => void {
 		const handle = enhance(form, () => {
 			contentLoading.start();
 			return async ({ update }) => {
-				try {
-					await update({ reset: false });
-				} finally {
-					contentLoading.stop();
-				}
+				// Drop overlay before DOM swap so page enter animation is visible.
+				contentLoading.stop();
+				await update({ reset: false });
 			};
 		});
 		destructors.set(form, () => {
