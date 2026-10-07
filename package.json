@@ -1,0 +1,13 @@
+{
+  "name": "gitreports",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generate daily developer activity reports from Git repositories",
+  "main": "gitreport.js",
+  "scripts": {
+    "report": "node gitreport.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}
