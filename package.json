@@ -1,13 +1,48 @@
 {
-  "name": "gitreports",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Generate daily developer activity reports from Git repositories",
-  "main": "gitreport.js",
-  "scripts": {
-    "report": "node gitreport.js"
-  },
-  "dependencies": {
-    "exceljs": "^4.4.0"
-  }
+	"name": "azgitwh",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"description": "Estimate developer work hours from Git history",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"start": "node build",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"db:migrate": "knex migrate:latest",
+		"db:rollback": "knex migrate:rollback",
+		"db:seed": "knex seed:run"
+	},
+	"engines": {
+		"node": ">=24"
+	},
+	"devDependencies": {
+		"@sveltejs/kit": "^3.0.0",
+		"@sveltejs/vite-plugin-svelte": "^7.2.0",
+		"@types/better-sqlite3": "^9.6.0",
+		"@types/jquery": "^4.0.1",
+		"@types/node": "^26.6.4",
+		"@types/nodemailer": "^8.0.2",
+		"@types/toastr": "^2.1.44",
+		"svelte": "^5.57.1",
+		"svelte-check": "^4.6.0",
+		"typescript": "^6.0.3",
+		"vite": "^8.3.0"
+	},
+	"imports": {
+		"#lib": "./src/lib/index.js",
+		"#lib/*": "./src/lib/*"
+	},
+	"dependencies": {
+		"@sveltejs/adapter-node": "^6.0.0",
+		"better-sqlite3": "^13.0.3",
+		"jquery": "^4.0.0",
+		"knex": "^3.3.0",
+		"nodemailer": "^10.0.16",
+		"sweetalert2": "^11.26.25",
+		"toastr": "^2.1.4"
+	}
 }
