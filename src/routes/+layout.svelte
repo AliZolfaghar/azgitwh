@@ -23,7 +23,11 @@
 </svelte:head>
 
 {#if isAuthed && data.user}
-	<AppShell userEmail={data.user.email} userName={data.user.displayName}>
+	<AppShell
+		userEmail={data.user.email}
+		userName={data.user.displayName}
+		isAdmin={data.user.role === 'admin'}
+	>
 		{#key pageKey}
 			<PageMotion>
 				{@render children()}

@@ -1,3 +1,4 @@
+import { assertCanAccessProject } from '#lib/server/projectMembers.js';
 import { getProjectById } from '#lib/server/projects.js';
 import {
 	addRepository,
@@ -30,9 +31,11 @@ function readRepoInput(form: FormData) {
 	};
 }
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const projectId = parseId(params.id);
 	if (!projectId) error(404, 'پروژه یافت نشد');
+
+	await assertCanAccessProject(locals.user, projectId);
 
 	const project = await getProjectById(projectId);
 	if (!project) error(404, 'پروژه یافت نشد');
@@ -62,9 +65,10 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	add: async ({ request, params }) => {
+	add: async ({ request, params, locals }) => {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const input = readRepoInput(form);
@@ -76,9 +80,10 @@ export const actions: Actions = {
 		return { action: 'add', success: true as const, message: 'ریپازیتوری اضافه شد.' };
 	},
 
-	update: async ({ request, params }) => {
+	update: async ({ request, params, locals }) => {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const repoId = Number(form.get('id'));
@@ -91,9 +96,10 @@ export const actions: Actions = {
 		return { action: 'update', success: true as const, message: 'ریپازیتوری به‌روزرسانی شد.' };
 	},
 
-	delete: async ({ request, params }) => {
+	delete: async ({ request, params, locals }) => {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const repoId = Number(form.get('id'));
@@ -104,9 +110,10 @@ export const actions: Actions = {
 		return { action: 'delete', success: true as const, message: 'ریپازیتوری حذف شد.' };
 	},
 
-	toggleEnabled: async ({ request, params }) => {
+	toggleEnabled: async ({ request, params, locals }) => {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const repoId = Number(form.get('id'));

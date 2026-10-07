@@ -1,3 +1,4 @@
+import { toIso } from '#lib/server/dates.js';
 import {
 	changeOwnPassword,
 	getUserProfile,
@@ -5,10 +6,6 @@ import {
 } from '#lib/server/profile.js';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-
-function toIso(value: string | Date) {
-	return value instanceof Date ? value.toISOString() : String(value);
-}
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) error(401, 'Unauthorized');

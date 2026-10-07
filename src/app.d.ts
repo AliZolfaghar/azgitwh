@@ -1,8 +1,10 @@
+import type { AuthUser } from '#lib/server/auth.js';
+
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			user: { id: number; email: string; displayName: string } | null;
+			user: AuthUser | null;
 		}
 		interface PageData {
 			/** Shown in the top navbar */

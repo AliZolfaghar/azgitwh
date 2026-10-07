@@ -19,10 +19,11 @@
 	interface Props {
 		userEmail: string;
 		userName: string;
+		isAdmin?: boolean;
 		children: Snippet;
 	}
 
-	let { userEmail, userName, children }: Props = $props();
+	let { userEmail, userName, isAdmin = false, children }: Props = $props();
 
 	let shellEl = $state<HTMLDivElement | undefined>();
 	let sidebarOpen = $state(true);
@@ -40,15 +41,19 @@
 		disabled?: boolean;
 	};
 
-	const navItems: NavItem[] = [
-		{ href: '/', label: 'داشبورد', icon: iconDashboard },
-		{ href: '/projects', label: 'پروژه‌ها', icon: iconFolder },
-		{ href: '/params', label: 'پارامترها', icon: iconSettings },
-		{ href: '/users', label: 'کاربران', icon: iconUsers },
-		{ href: '/mail', label: 'ایمیل', icon: iconMail },
-		{ href: '/profile', label: 'پروفایل من', icon: iconUser },
-		{ href: '/help', label: 'راهنمای استفاده', icon: iconHelp }
-	];
+	const navItems = $derived(
+		(
+			[
+				{ href: '/', label: 'داشبورد', icon: iconDashboard },
+				{ href: '/projects', label: 'پروژه‌ها', icon: iconFolder },
+				isAdmin ? { href: '/params', label: 'پارامترها', icon: iconSettings } : null,
+				isAdmin ? { href: '/users', label: 'کاربران', icon: iconUsers } : null,
+				isAdmin ? { href: '/mail', label: 'ایمیل', icon: iconMail } : null,
+				{ href: '/profile', label: 'پروفایل من', icon: iconUser },
+				isAdmin ? { href: '/help', label: 'راهنمای استفاده', icon: iconHelp } : null
+			] as Array<NavItem | null>
+		).filter((item): item is NavItem => item != null)
+	);
 
 	function toggleSidebar() {
 		if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {

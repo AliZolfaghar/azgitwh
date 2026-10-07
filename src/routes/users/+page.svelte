@@ -33,18 +33,22 @@
 	});
 
 	function formatDate(value: string) {
-		try {
-			return new Intl.DateTimeFormat('fa-IR', {
-				dateStyle: 'medium',
-				timeStyle: 'short'
-			}).format(new Date(value));
-		} catch {
-			return value;
-		}
+		if (!value) return '—';
+		const date = /^\d{10,}$/.test(value) ? new Date(Number(value)) : new Date(value);
+		if (Number.isNaN(date.getTime())) return value;
+		return new Intl.DateTimeFormat('fa-IR', {
+			dateStyle: 'medium',
+			timeStyle: 'short'
+		}).format(date);
 	}
 
 	function closeModal() {
 		modal = null;
+	}
+
+	function formRole(fallback: string) {
+		if (form && 'role' in form && form.role != null) return String(form.role);
+		return fallback;
 	}
 </script>
 
@@ -68,6 +72,7 @@
 					<th style="width: 4rem">شناسه</th>
 					<th>نام</th>
 					<th>ایمیل</th>
+					<th style="width: 6rem">نقش</th>
 					<th style="width: 9rem">ایجاد</th>
 					<th style="width: 10rem">عملیات</th>
 				</tr>
@@ -78,6 +83,11 @@
 						<td class="mono">{user.id}</td>
 						<td>{user.displayName || '—'}</td>
 						<td class="muted">{user.email}</td>
+						<td>
+							<span class="role-badge" class:role-admin={user.role === 'admin'}>
+								{user.roleLabel}
+							</span>
+						</td>
 						<td class="muted">{formatDate(user.createdAt)}</td>
 						<td>
 							<div class="row-actions">
@@ -133,6 +143,13 @@
 			/>
 		</label>
 		<label class="field">
+			<span>سطح دسترسی</span>
+			<select name="role" value={formRole('user')}>
+				<option value="user">{data.roleLabels.user}</option>
+				<option value="admin">{data.roleLabels.admin}</option>
+			</select>
+		</label>
+		<label class="field">
 			<span>کلمه عبور</span>
 			<input type="password" name="password" required autocomplete="new-password" minlength="6" />
 		</label>
@@ -177,6 +194,13 @@
 				/>
 			</label>
 			<label class="field">
+				<span>سطح دسترسی</span>
+				<select name="role" value={formRole(modal.user.role)}>
+					<option value="user">{data.roleLabels.user}</option>
+					<option value="admin">{data.roleLabels.admin}</option>
+				</select>
+			</label>
+			<label class="field">
 				<span>کلمه عبور جدید</span>
 				<input
 					type="password"
@@ -210,3 +234,20 @@
 		<button type="submit" form="user-delete-form" class="btn-danger">حذف قطعی</button>
 	{/snippet}
 </Modal>
+
+<style>
+	.role-badge {
+		display: inline-block;
+		padding: 0.15rem 0.5rem;
+		border-radius: 999px;
+		font-size: 0.8rem;
+		background: color-mix(in srgb, var(--color-border) 65%, transparent);
+		color: var(--color-text-muted, inherit);
+	}
+
+	.role-badge.role-admin {
+		background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+		color: var(--color-primary);
+		font-weight: 600;
+	}
+</style>

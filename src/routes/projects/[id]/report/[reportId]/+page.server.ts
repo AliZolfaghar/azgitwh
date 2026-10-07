@@ -1,3 +1,4 @@
+import { assertCanAccessProject } from '#lib/server/projectMembers.js';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -6,8 +7,10 @@ function parseId(raw: string) {
 	return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const projectId = parseId(params.id);
+	const reportId = parseId(params.reportId);
 	if (!projectId) error(404, 'پروژه یافت نشد');
-	redirect(303, `/projects/${projectId}/invoice`);
+	await assertCanAccessProject(locals.user, projectId);
+	redirect(303, reportId ? `/projects/${projectId}/invoice/${reportId}` : `/projects/${projectId}/invoice`);
 };

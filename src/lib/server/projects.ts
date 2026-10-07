@@ -1,3 +1,5 @@
+import type { AuthUser } from './auth.js';
+import { isAdmin } from './auth.js';
 import { assertCurrencyCode } from './currencies.js';
 import { getDb } from './db.js';
 
@@ -22,9 +24,9 @@ export async function countProjects(): Promise<number> {
 	return Number(row?.count ?? 0);
 }
 
-export async function listProjects(): Promise<ProjectWithCurrency[]> {
+export async function listProjects(user?: AuthUser | null): Promise<ProjectWithCurrency[]> {
 	const db = await getDb();
-	return db('projects')
+	const query = db('projects')
 		.select(
 			'projects.id',
 			'projects.name',
@@ -38,6 +40,14 @@ export async function listProjects(): Promise<ProjectWithCurrency[]> {
 		)
 		.leftJoin('currencies', 'projects.currency_code', 'currencies.code')
 		.orderBy('projects.id', 'asc');
+
+	if (user && !isAdmin(user)) {
+		query
+			.join('project_members', 'project_members.project_id', 'projects.id')
+			.where('project_members.user_id', user.id);
+	}
+
+	return query;
 }
 
 export async function getProjectById(id: number): Promise<ProjectWithCurrency | null> {

@@ -1,13 +1,16 @@
 import { ADMIN_EMAIL, isValidEmail } from './auth.js';
+import { nowIso } from './dates.js';
 import { getDb } from './db.js';
 import { hashPassword } from './password.js';
+import { isAdminRole, parseRole, type UserRole } from './roles.js';
 
 export type UserRow = {
 	id: number;
 	email: string;
 	display_name: string;
-	created_at: string | Date;
-	updated_at: string | Date;
+	role: UserRole;
+	created_at: string | Date | number;
+	updated_at: string | Date | number;
 };
 
 export const MIN_PASSWORD_LENGTH = 6;
@@ -31,15 +34,36 @@ function validateName(name: string) {
 	return { ok: true as const, value: normalized };
 }
 
-export async function listUsers(): Promise<UserRow[]> {
+async function countAdmins(excludeId?: number) {
 	const db = await getDb();
-	return db('users')
-		.select('id', 'email', 'display_name', 'created_at', 'updated_at')
-		.orderBy('id', 'asc');
+	let query = db('users').where({ role: 'admin' }).count({ count: '*' });
+	if (excludeId != null) {
+		query = query.whereNot({ id: excludeId });
+	}
+	const row = await query.first<{ count: number | string }>();
+	return Number(row?.count ?? 0);
 }
 
-export async function createUser(email: string, password: string, displayName: string) {
+export async function listUsers(): Promise<UserRow[]> {
+	const db = await getDb();
+	const rows = await db('users')
+		.select('id', 'email', 'display_name', 'role', 'created_at', 'updated_at')
+		.orderBy('id', 'asc');
+
+	return rows.map((row) => ({
+		...row,
+		role: parseRole(row.role)
+	}));
+}
+
+export async function createUser(
+	email: string,
+	password: string,
+	displayName: string,
+	roleInput: unknown = 'user'
+) {
 	const normalized = email.trim().toLowerCase();
+	const role = parseRole(roleInput, 'user');
 	if (!isValidEmail(normalized)) {
 		return { ok: false as const, message: 'ایمیل معتبر نیست.' };
 	}
@@ -61,6 +85,7 @@ export async function createUser(email: string, password: string, displayName: s
 	const [id] = await db('users').insert({
 		email: normalized,
 		display_name: name.value,
+		role,
 		password_hash: hashPassword(password)
 	});
 
@@ -72,9 +97,11 @@ export async function updateUser(
 	email: string,
 	password: string | undefined,
 	displayName: string,
-	currentUserId: number
+	currentUserId: number,
+	roleInput: unknown
 ) {
 	const normalized = email.trim().toLowerCase();
+	const role = parseRole(roleInput, 'user');
 	if (!Number.isInteger(id) || id < 1) {
 		return { ok: false as const, message: 'شناسه کاربر نامعتبر است.' };
 	}
@@ -91,7 +118,9 @@ export async function updateUser(
 	}
 
 	const db = await getDb();
-	const user = await db('users').where({ id }).first<{ id: number; email: string }>();
+	const user = await db('users')
+		.where({ id })
+		.first<{ id: number; email: string; role: string }>();
 	if (!user) {
 		return { ok: false as const, message: 'کاربر یافت نشد.' };
 	}
@@ -104,15 +133,25 @@ export async function updateUser(
 		return { ok: false as const, message: 'این ایمیل قبلاً ثبت شده است.' };
 	}
 
+	const wasAdmin = isAdminRole(user.role);
+	if (wasAdmin && role !== 'admin') {
+		const remaining = await countAdmins(id);
+		if (remaining < 1) {
+			return { ok: false as const, message: 'حداقل یک ادمین باید در سیستم بماند.' };
+		}
+	}
+
 	const patch: {
 		email: string;
 		display_name: string;
+		role: UserRole;
 		password_hash?: string;
-		updated_at: Date;
+		updated_at: string;
 	} = {
 		email: normalized,
 		display_name: name.value,
-		updated_at: new Date()
+		role,
+		updated_at: nowIso()
 	};
 	if (password) {
 		patch.password_hash = hashPassword(password);
@@ -124,7 +163,7 @@ export async function updateUser(
 		await db('sessions').where({ user_id: id }).update({ email: normalized });
 	}
 
-	return { ok: true as const };
+	return { ok: true as const, role };
 }
 
 export async function deleteUser(id: number, currentUserId: number) {
@@ -136,7 +175,7 @@ export async function deleteUser(id: number, currentUserId: number) {
 	}
 
 	const db = await getDb();
-	const user = await db('users').where({ id }).first<{ id: number; email: string }>();
+	const user = await db('users').where({ id }).first<{ id: number; email: string; role: string }>();
 	if (!user) {
 		return { ok: false as const, message: 'کاربر یافت نشد.' };
 	}
@@ -150,6 +189,24 @@ export async function deleteUser(id: number, currentUserId: number) {
 		return { ok: false as const, message: 'کاربر اولیه admin را نمی‌توان حذف کرد.' };
 	}
 
+	if (isAdminRole(user.role)) {
+		const remaining = await countAdmins(id);
+		if (remaining < 1) {
+			return { ok: false as const, message: 'حداقل یک ادمین باید در سیستم بماند.' };
+		}
+	}
+
 	await db('users').where({ id }).del();
 	return { ok: true as const };
+}
+
+export function canDeleteUser(
+	user: { id: number; email: string; role: UserRole },
+	currentUserId: number,
+	adminCount: number
+) {
+	if (user.id === currentUserId) return false;
+	if (user.email === ADMIN_EMAIL) return false;
+	if (isAdminRole(user.role) && adminCount <= 1) return false;
+	return true;
 }

@@ -1,11 +1,15 @@
+import { isAdmin } from '#lib/server/auth.js';
 import { getDbInfo } from '#lib/server/db.js';
-import { countProjects } from '#lib/server/projects.js';
+import { countProjectsForUser } from '#lib/server/projectMembers.js';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
-	const projectCount = await countProjects();
-	if (projectCount === 0) {
+export const load: PageServerLoad = async ({ locals }) => {
+	const user = locals.user!;
+	const admin = isAdmin(user);
+	const projectCount = await countProjectsForUser(user);
+
+	if (admin && projectCount === 0) {
 		redirect(303, '/projects');
 	}
 
@@ -13,6 +17,7 @@ export const load: PageServerLoad = async () => {
 
 	return {
 		pageTitle: 'داشبورد',
+		isAdmin: admin,
 		projectCount,
 		dbPath: db.path,
 		installedAt: db.installedAt,

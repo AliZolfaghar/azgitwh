@@ -24,14 +24,13 @@
 	});
 
 	function formatDate(value: string) {
-		try {
-			return new Intl.DateTimeFormat('fa-IR', {
-				dateStyle: 'medium',
-				timeStyle: 'short'
-			}).format(new Date(value));
-		} catch {
-			return value;
-		}
+		if (!value) return '—';
+		const date = /^\d{10,}$/.test(value) ? new Date(Number(value)) : new Date(value);
+		if (Number.isNaN(date.getTime())) return value;
+		return new Intl.DateTimeFormat('fa-IR', {
+			dateStyle: 'medium',
+			timeStyle: 'short'
+		}).format(date);
 	}
 
 	function closeModal() {

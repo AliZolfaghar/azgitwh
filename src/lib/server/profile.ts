@@ -1,4 +1,5 @@
 import { isValidEmail } from './auth.js';
+import { nowIso } from './dates.js';
 import { getDb } from './db.js';
 import { hashPassword, verifyPassword } from './password.js';
 import { MIN_PASSWORD_LENGTH } from './users.js';
@@ -7,8 +8,8 @@ export type UserProfile = {
 	id: number;
 	email: string;
 	display_name: string;
-	created_at: string | Date;
-	updated_at: string | Date;
+	created_at: string | Date | number;
+	updated_at: string | Date | number;
 };
 
 export async function getUserProfile(userId: number): Promise<UserProfile | null> {
@@ -52,7 +53,7 @@ export async function updateOwnProfile(
 	await db('users').where({ id: userId }).update({
 		email,
 		display_name: displayName,
-		updated_at: new Date()
+		updated_at: nowIso()
 	});
 
 	if (email !== user.email) {
@@ -96,7 +97,7 @@ export async function changeOwnPassword(
 
 	await db('users').where({ id: userId }).update({
 		password_hash: hashPassword(input.newPassword),
-		updated_at: new Date()
+		updated_at: nowIso()
 	});
 
 	return { ok: true as const, message: 'کلمه عبور با موفقیت تغییر کرد.' };

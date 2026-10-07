@@ -8,6 +8,7 @@ import {
 	updateInvoiceLineHours,
 	updateInvoiceLocale
 } from '#lib/server/projectInvoices.js';
+import { assertCanAccessProject } from '#lib/server/projectMembers.js';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -16,10 +17,12 @@ function parseId(raw: string) {
 	return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const projectId = parseId(params.id);
 	const invoiceId = parseId(params.invoiceId);
 	if (!projectId || !invoiceId) error(404, 'یافت نشد');
+
+	await assertCanAccessProject(locals.user, projectId);
 
 	const invoice = await getProjectInvoice(projectId, invoiceId);
 	if (!invoice) error(404, 'فاکتور یافت نشد');
@@ -41,10 +44,11 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	setLocale: async ({ params, request }) => {
+	setLocale: async ({ params, request, locals }) => {
 		const projectId = parseId(params.id);
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const locale = normalizeInvoiceLocale(form.get('locale'));
@@ -56,10 +60,11 @@ export const actions: Actions = {
 		return { action: 'setLocale', success: true, message: result.message };
 	},
 
-	addItem: async ({ params, request }) => {
+	addItem: async ({ params, request, locals }) => {
 		const projectId = parseId(params.id);
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const email = String(form.get('email') ?? '').trim();
@@ -89,10 +94,11 @@ export const actions: Actions = {
 		return { action: 'addItem', success: true, message: result.message };
 	},
 
-	updateHours: async ({ params, request }) => {
+	updateHours: async ({ params, request, locals }) => {
 		const projectId = parseId(params.id);
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const lineId = String(form.get('line_id') ?? '').trim();
@@ -112,10 +118,11 @@ export const actions: Actions = {
 		return { action: 'updateHours', success: true, message: result.message };
 	},
 
-	deleteLine: async ({ params, request }) => {
+	deleteLine: async ({ params, request, locals }) => {
 		const projectId = parseId(params.id);
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const lineId = String(form.get('line_id') ?? '').trim();
@@ -127,10 +134,11 @@ export const actions: Actions = {
 		return { action: 'deleteLine', success: true, message: result.message };
 	},
 
-	regenerate: async ({ params }) => {
+	regenerate: async ({ params, locals }) => {
 		const projectId = parseId(params.id);
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const result = await regenerateInvoice(projectId, invoiceId);
 		if (!result.ok) {
@@ -140,10 +148,11 @@ export const actions: Actions = {
 		return { action: 'regenerate', success: true, message: result.message };
 	},
 
-	delete: async ({ params }) => {
+	delete: async ({ params, locals }) => {
 		const projectId = parseId(params.id);
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const result = await deleteProjectInvoice(projectId, invoiceId);
 		if (!result.ok) {

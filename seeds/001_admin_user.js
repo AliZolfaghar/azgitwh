@@ -19,6 +19,7 @@ export async function seed(knex) {
 	await knex('users').insert({
 		email: ADMIN_EMAIL,
 		display_name: 'مدیر سیستم',
+		role: 'admin',
 		password_hash: hashPassword(ADMIN_PASSWORD)
 	});
 }

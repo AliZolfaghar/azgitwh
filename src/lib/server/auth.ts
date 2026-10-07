@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import type { Cookies } from '@sveltejs/kit';
 import { getDb } from './db.js';
 import { verifyPassword } from './password.js';
+import { isAdminRole, parseRole, type UserRole } from './roles.js';
 
 export const SESSION_COOKIE = 'azgitwh_session';
 export const ADMIN_EMAIL = 'admin@local';
@@ -13,6 +14,7 @@ export type AuthUser = {
 	id: number;
 	email: string;
 	displayName: string;
+	role: UserRole;
 };
 
 function sessionExpiryIso() {
@@ -26,6 +28,10 @@ export function isValidEmail(email: string): boolean {
 	return /^[^\s@]+@[^\s@]+$/.test(email);
 }
 
+export function isAdmin(user: AuthUser | null | undefined): boolean {
+	return Boolean(user && isAdminRole(user.role));
+}
+
 export async function verifyCredentials(
 	email: string,
 	password: string
@@ -35,12 +41,23 @@ export async function verifyCredentials(
 	const db = await getDb();
 	const user = await db('users')
 		.where({ email: email.trim().toLowerCase() })
-		.first<{ id: number; email: string; display_name: string; password_hash: string }>();
+		.first<{
+			id: number;
+			email: string;
+			display_name: string;
+			password_hash: string;
+			role: string;
+		}>();
 
 	if (!user) return null;
 	if (!verifyPassword(password, user.password_hash)) return null;
 
-	return { id: user.id, email: user.email, displayName: user.display_name || '' };
+	return {
+		id: user.id,
+		email: user.email,
+		displayName: user.display_name || '',
+		role: parseRole(user.role)
+	};
 }
 
 export async function createSession(user: AuthUser, cookies: Cookies) {
@@ -86,13 +103,15 @@ export async function getUserFromSession(cookies: Cookies): Promise<AuthUser | n
 			'sessions.user_id',
 			'sessions.email',
 			'sessions.expires_at',
-			'users.display_name'
+			'users.display_name',
+			'users.role'
 		)
 		.where('sessions.id', id)
 		.first<{
 			user_id: number;
 			email: string;
 			display_name: string;
+			role: string;
 			expires_at: string;
 		}>();
 
@@ -110,6 +129,7 @@ export async function getUserFromSession(cookies: Cookies): Promise<AuthUser | n
 	return {
 		id: row.user_id,
 		email: row.email,
-		displayName: row.display_name || ''
+		displayName: row.display_name || '',
+		role: parseRole(row.role)
 	};
 }

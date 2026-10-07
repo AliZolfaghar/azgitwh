@@ -5,6 +5,7 @@ import {
 	periodsFromRange
 } from '#lib/server/gitReport.js';
 import { createInvoiceFromProject, listProjectInvoices } from '#lib/server/projectInvoices.js';
+import { assertCanAccessProject } from '#lib/server/projectMembers.js';
 import { getProjectById } from '#lib/server/projects.js';
 import { listProjectRepositories } from '#lib/server/repositories.js';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -15,9 +16,11 @@ function parseId(raw: string) {
 	return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const projectId = parseId(params.id);
 	if (!projectId) error(404, 'پروژه یافت نشد');
+
+	await assertCanAccessProject(locals.user, projectId);
 
 	const project = await getProjectById(projectId);
 	if (!project) error(404, 'پروژه یافت نشد');
@@ -48,6 +51,7 @@ export const actions: Actions = {
 	create: async ({ request, params, locals }) => {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const from = String(form.get('from') ?? '').trim();

@@ -1,4 +1,4 @@
-import { getUserFromSession } from '#lib/server/auth.js';
+import { getUserFromSession, isAdmin } from '#lib/server/auth.js';
 import { getDb } from '#lib/server/db.js';
 import { redirect } from '@sveltejs/kit';
 import type { Handle, ServerInit } from '@sveltejs/kit/hooks';
@@ -10,6 +10,18 @@ export const init: ServerInit = async () => {
 
 function isPublicPath(path: string) {
 	return path === '/logout' || path === '/login' || path.startsWith('/login/');
+}
+
+/** Paths a normal (non-admin) user may open. */
+function isNormalUserPath(path: string) {
+	return (
+		path === '/' ||
+		path === '/profile' ||
+		path.startsWith('/profile/') ||
+		path === '/projects' ||
+		path.startsWith('/projects/') ||
+		path === '/logout'
+	);
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -24,6 +36,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	if (user && (path === '/login' || path.startsWith('/login/'))) {
+		redirect(303, '/');
+	}
+
+	if (user && !isAdmin(user) && !isNormalUserPath(path)) {
 		redirect(303, '/');
 	}
 
