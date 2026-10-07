@@ -50,8 +50,8 @@ export const actions: Actions = {
 			});
 		}
 
-		// Keep locals in sync for this response cycle is not needed; next request loads session.
 		locals.user.email = result.email;
+		locals.user.displayName = displayName.trim();
 
 		return { action: 'profile', success: true as const, message: result.message };
 	},

@@ -1,4 +1,5 @@
 import { enhance } from '$app/forms';
+import { contentLoading } from '#lib/loading.svelte.js';
 
 const wired = new WeakSet<HTMLFormElement>();
 
@@ -9,7 +10,17 @@ export function wireBusyForms(root: ParentNode): () => void {
 	function wire(form: HTMLFormElement) {
 		if (wired.has(form) || form.hasAttribute('data-no-loader')) return;
 		wired.add(form);
-		const handle = enhance(form);
+		// Keep controlled fields intact; drive content loader for long actions (SMTP test, etc.).
+		const handle = enhance(form, () => {
+			contentLoading.start();
+			return async ({ update }) => {
+				try {
+					await update({ reset: false });
+				} finally {
+					contentLoading.stop();
+				}
+			};
+		});
 		destructors.set(form, () => {
 			handle.destroy();
 			wired.delete(form);

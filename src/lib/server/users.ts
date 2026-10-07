@@ -11,6 +11,25 @@ export type UserRow = {
 };
 
 export const MIN_PASSWORD_LENGTH = 6;
+export const MAX_NAME_LENGTH = 120;
+
+function normalizeName(name: string) {
+	return name.trim().replace(/\s+/g, ' ');
+}
+
+function validateName(name: string) {
+	const normalized = normalizeName(name);
+	if (!normalized) {
+		return { ok: false as const, message: 'نام کاربر الزامی است.' };
+	}
+	if (normalized.length > MAX_NAME_LENGTH) {
+		return {
+			ok: false as const,
+			message: `نام حداکثر ${MAX_NAME_LENGTH} کاراکتر باشد.`
+		};
+	}
+	return { ok: true as const, value: normalized };
+}
 
 export async function listUsers(): Promise<UserRow[]> {
 	const db = await getDb();
@@ -19,11 +38,13 @@ export async function listUsers(): Promise<UserRow[]> {
 		.orderBy('id', 'asc');
 }
 
-export async function createUser(email: string, password: string, displayName = '') {
+export async function createUser(email: string, password: string, displayName: string) {
 	const normalized = email.trim().toLowerCase();
 	if (!isValidEmail(normalized)) {
 		return { ok: false as const, message: 'ایمیل معتبر نیست.' };
 	}
+	const name = validateName(displayName);
+	if (!name.ok) return name;
 	if (password.length < MIN_PASSWORD_LENGTH) {
 		return {
 			ok: false as const,
@@ -39,7 +60,7 @@ export async function createUser(email: string, password: string, displayName = 
 
 	const [id] = await db('users').insert({
 		email: normalized,
-		display_name: displayName.trim(),
+		display_name: name.value,
 		password_hash: hashPassword(password)
 	});
 
@@ -50,6 +71,7 @@ export async function updateUser(
 	id: number,
 	email: string,
 	password: string | undefined,
+	displayName: string,
 	currentUserId: number
 ) {
 	const normalized = email.trim().toLowerCase();
@@ -59,6 +81,8 @@ export async function updateUser(
 	if (!isValidEmail(normalized)) {
 		return { ok: false as const, message: 'ایمیل معتبر نیست.' };
 	}
+	const name = validateName(displayName);
+	if (!name.ok) return name;
 	if (password && password.length < MIN_PASSWORD_LENGTH) {
 		return {
 			ok: false as const,
@@ -80,8 +104,14 @@ export async function updateUser(
 		return { ok: false as const, message: 'این ایمیل قبلاً ثبت شده است.' };
 	}
 
-	const patch: { email: string; password_hash?: string; updated_at: Date } = {
+	const patch: {
+		email: string;
+		display_name: string;
+		password_hash?: string;
+		updated_at: Date;
+	} = {
 		email: normalized,
+		display_name: name.value,
 		updated_at: new Date()
 	};
 	if (password) {

@@ -33,12 +33,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	create: async ({ request }) => {
 		const form = await request.formData();
+		const displayName = String(form.get('display_name') ?? '');
 		const email = String(form.get('email') ?? '');
 		const password = String(form.get('password') ?? '');
 
-		const result = await createUser(email, password);
+		const result = await createUser(email, password, displayName);
 		if (!result.ok) {
-			return fail(400, { action: 'create', email, message: result.message });
+			return fail(400, {
+				action: 'create',
+				display_name: displayName,
+				email,
+				message: result.message
+			});
 		}
 
 		return { action: 'create', success: true as const, message: 'کاربر اضافه شد.' };
@@ -47,6 +53,7 @@ export const actions: Actions = {
 	update: async ({ request, locals }) => {
 		const form = await request.formData();
 		const id = Number(form.get('id'));
+		const displayName = String(form.get('display_name') ?? '');
 		const email = String(form.get('email') ?? '');
 		const password = String(form.get('password') ?? '');
 
@@ -54,10 +61,17 @@ export const actions: Actions = {
 			id,
 			email,
 			password.trim() ? password : undefined,
+			displayName,
 			locals.user!.id
 		);
 		if (!result.ok) {
-			return fail(400, { action: 'update', id, email, message: result.message });
+			return fail(400, {
+				action: 'update',
+				id,
+				display_name: displayName,
+				email,
+				message: result.message
+			});
 		}
 
 		return { action: 'update', success: true as const, message: 'کاربر به‌روزرسانی شد.' };

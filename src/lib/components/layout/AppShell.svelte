@@ -19,10 +19,11 @@
 
 	interface Props {
 		userEmail: string;
+		userName: string;
 		children: Snippet;
 	}
 
-	let { userEmail, children }: Props = $props();
+	let { userEmail, userName, children }: Props = $props();
 
 	let shellEl = $state<HTMLDivElement | undefined>();
 	let sidebarOpen = $state(true);
@@ -66,6 +67,10 @@
 			navItems.find((item) => !item.disabled && item.href === page.url.pathname)?.label ??
 			'azgitwh'
 	);
+
+	const displayName = $derived(userName.trim() || userEmail);
+	const avatarLetter = $derived(displayName.charAt(0).toUpperCase());
+	const expanded = $derived(sidebarOpen || mobileOpen);
 </script>
 
 {#if mobileOpen}
@@ -82,9 +87,31 @@
 	>
 		<div class="sidebar-brand">
 			<div class="sidebar-brand-mark">AZ</div>
-			{#if sidebarOpen || mobileOpen}
+			{#if expanded}
 				<span class="sidebar-brand-text">azgitwh</span>
 			{/if}
+		</div>
+
+		<div class="sidebar-user-card">
+			<a
+				href="/profile"
+				class="sidebar-user-main"
+				title="پروفایل من"
+				onclick={closeMobile}
+			>
+				<span class="sidebar-user-avatar" aria-hidden="true">{avatarLetter}</span>
+				{#if expanded}
+					<span class="sidebar-user-meta">
+						<span class="sidebar-user-name">{displayName}</span>
+						<span class="sidebar-user-email">{userEmail}</span>
+					</span>
+				{/if}
+			</a>
+			<form method="POST" action="/logout" class="sidebar-user-logout">
+				<button type="submit" class="sidebar-logout-btn" aria-label="خروج" title="خروج">
+					{@html iconLogout}
+				</button>
+			</form>
 		</div>
 
 		<div class="nav-search">
@@ -136,13 +163,7 @@
 			</button>
 			<h1 class="header-title">{pageTitle}</h1>
 			<span class="header-spacer"></span>
-			<a class="header-user" href="/profile" title="پروفایل من">{userEmail}</a>
 			<ThemeToggle />
-			<form method="POST" action="/logout">
-				<button type="submit" class="icon-btn" aria-label="خروج" title="خروج">
-					{@html iconLogout}
-				</button>
-			</form>
 		</header>
 
 		<main class="content">

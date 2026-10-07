@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { getDb } from './db.js';
+import { buildTestMail } from './mailTemplate.js';
 
 export type MailProvider = 'smtp' | 'gmail';
 
@@ -84,6 +85,31 @@ export async function getMailSettings(): Promise<MailSettings> {
 
 export async function saveMailSettings(input: MailSettingsInput) {
 	const normalized = applyProviderDefaults(input);
+	const current = await getMailSettings();
+	const password =
+		normalized.password && normalized.password.trim()
+			? normalized.password.trim()
+			: current.password;
+
+	// Allow turning mail off without re-validating connection fields.
+	if (!normalized.enabled) {
+		const db = await getDb();
+		await db('mail_settings')
+			.where({ id: current.id })
+			.update({
+				enabled: false,
+				provider: normalized.provider,
+				host: normalized.host.trim() || current.host,
+				port: Number.isInteger(normalized.port) ? normalized.port : current.port,
+				secure: normalized.secure,
+				username: normalized.username.trim() || current.username,
+				password,
+				from_email: normalized.from_email.trim() || current.from_email,
+				from_name: normalized.from_name.trim() || current.from_name || 'azgitwh',
+				updated_at: new Date()
+			});
+		return { ok: true as const, message: 'ارسال ایمیل غیرفعال شد.' };
+	}
 
 	if (!normalized.host.trim()) {
 		return { ok: false as const, message: 'میزبان SMTP الزامی است.' };
@@ -94,14 +120,7 @@ export async function saveMailSettings(input: MailSettingsInput) {
 	if (!normalized.from_email.trim()) {
 		return { ok: false as const, message: 'ایمیل فرستنده الزامی است.' };
 	}
-
-	const current = await getMailSettings();
-	const password =
-		normalized.password && normalized.password.trim()
-			? normalized.password.trim()
-			: current.password;
-
-	if (normalized.enabled && !password) {
+	if (!password) {
 		return { ok: false as const, message: 'برای فعال‌سازی، کلمه عبور / App Password لازم است.' };
 	}
 
@@ -110,7 +129,7 @@ export async function saveMailSettings(input: MailSettingsInput) {
 		.where({ id: current.id })
 		.update({
 			provider: normalized.provider,
-			enabled: normalized.enabled,
+			enabled: true,
 			host: normalized.host.trim(),
 			port: normalized.port,
 			secure: normalized.secure,
@@ -212,15 +231,17 @@ export async function sendTestMail(to: string, override?: Partial<MailSettingsIn
 		password: merged.password!
 	});
 
+	const mail = buildTestMail(to.trim(), merged.from_name || 'azgitwh');
+
 	try {
 		await transporter.sendMail({
 			from: merged.from_name
 				? `"${merged.from_name}" <${merged.from_email}>`
 				: merged.from_email,
 			to: to.trim(),
-			subject: 'آزمایش ایمیل azgitwh',
-			text: 'این یک ایمیل آزمایشی از برنامه azgitwh است. اتصال SMTP درست کار می‌کند.',
-			html: '<p>این یک ایمیل آزمایشی از برنامه <strong>azgitwh</strong> است.</p><p>اتصال SMTP درست کار می‌کند.</p>'
+			subject: mail.subject,
+			text: mail.text,
+			html: mail.html
 		});
 		return { ok: true as const, message: `ایمیل آزمایشی به ${to.trim()} ارسال شد.` };
 	} catch (error) {

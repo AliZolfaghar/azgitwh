@@ -4,8 +4,6 @@
 
 	let { data, form }: PageProps = $props();
 
-	const initial = $derived(data.settings);
-
 	let provider = $state<'smtp' | 'gmail'>('smtp');
 	let host = $state('');
 	let port = $state(587);
@@ -15,198 +13,369 @@
 	let fromName = $state('');
 	let enabled = $state(false);
 	let testTo = $state('');
-	let hydrated = $state(false);
+	let password = $state('');
+	let syncKey = $state('');
+	let testToReady = $state(false);
+
+	const settings = $derived(data.settings);
+	const formSnapshot = $derived(form && 'host' in form ? form : null);
+	const savedEnabled = $derived(Boolean(settings.enabled));
+
+	function applyFrom(source: {
+		provider?: string | null;
+		host?: string | null;
+		port?: number | string | null;
+		secure?: boolean | null;
+		username?: string | null;
+		from_email?: string | null;
+		from_name?: string | null;
+		enabled?: boolean | null;
+		test_to?: string | null;
+	}) {
+		provider = source.provider === 'gmail' ? 'gmail' : 'smtp';
+		host = String(source.host ?? '');
+		port = Number(source.port ?? 587);
+		secure = Boolean(source.secure);
+		username = String(source.username ?? '');
+		fromEmail = String(source.from_email ?? '');
+		fromName = String(source.from_name ?? '');
+		enabled = Boolean(source.enabled);
+		if (source.test_to) testTo = String(source.test_to);
+		password = '';
+	}
 
 	$effect(() => {
-		if (form && 'host' in form) {
-			provider = form.provider === 'gmail' ? 'gmail' : 'smtp';
-			host = String(form.host ?? '');
-			port = Number(form.port ?? 587);
-			secure = Boolean(form.secure);
-			username = String(form.username ?? '');
-			fromEmail = String(form.from_email ?? '');
-			fromName = String(form.from_name ?? '');
-			enabled = Boolean(form.enabled);
-			if ('test_to' in form && form.test_to) testTo = String(form.test_to);
-			return;
-		}
+		const key = formSnapshot
+			? [
+					'form',
+					form?.action,
+					formSnapshot.provider,
+					formSnapshot.host,
+					formSnapshot.port,
+					formSnapshot.secure,
+					formSnapshot.username,
+					formSnapshot.from_email,
+					formSnapshot.from_name,
+					formSnapshot.enabled,
+					'test_to' in formSnapshot ? formSnapshot.test_to : ''
+				].join('|')
+			: [
+					'data',
+					settings.provider,
+					settings.host,
+					settings.port,
+					settings.secure,
+					settings.username,
+					settings.from_email,
+					settings.from_name,
+					settings.enabled,
+					settings.hasPassword
+				].join('|');
 
-		if (!hydrated) {
-			provider = initial.provider === 'gmail' ? 'gmail' : 'smtp';
-			host = initial.host;
-			port = initial.port;
-			secure = initial.secure;
-			username = initial.username;
-			fromEmail = initial.from_email;
-			fromName = initial.from_name;
-			enabled = initial.enabled;
+		if (key === syncKey) return;
+		syncKey = key;
+
+		if (formSnapshot) applyFrom(formSnapshot);
+		else applyFrom(settings);
+
+		if (!testToReady) {
 			testTo = data.defaultTestTo;
-			hydrated = true;
+			testToReady = true;
 		}
 	});
 
-	function applyGmailPreset() {
+	function selectSmtp() {
+		provider = 'smtp';
+		if (!host || host === 'smtp.gmail.com') {
+			host = '';
+			port = 587;
+			secure = false;
+		}
+	}
+
+	function selectGmail() {
 		provider = 'gmail';
 		host = 'smtp.gmail.com';
 		port = 465;
 		secure = true;
 	}
-
-	function applySmtpMode() {
-		provider = 'smtp';
-	}
 </script>
 
 <FormAlert {form} />
 
-<section class="paper mail-intro">
-	<p class="muted" style="margin: 0">
-		اتصال برنامه به سرور ایمیل برای ارسال اعلان‌ها و گزارش‌ها. برای Gmail از
-		<strong>App Password</strong> استفاده کنید (نه رمز اصلی حساب).
-	</p>
-</section>
+<form method="POST" class="mail-page" id="mail-settings-form">
+	<input type="hidden" name="provider" value={provider} />
+	{#if provider === 'gmail'}
+		<input type="hidden" name="host" value={host} />
+		<input type="hidden" name="port" value={port} />
+		<input type="hidden" name="secure" value="true" />
+	{/if}
 
-<form method="POST" class="mail-form" id="mail-settings-form">
-	<section class="paper">
-		<h2 class="section-title">نوع اتصال</h2>
-		<div class="provider-tabs">
-			<label class="provider-tab" class:active={provider === 'smtp'}>
-				<input
-					type="radio"
-					name="provider"
-					value="smtp"
-					checked={provider === 'smtp'}
-					onchange={applySmtpMode}
-				/>
-				<span>SMTP سفارشی</span>
-			</label>
-			<label class="provider-tab" class:active={provider === 'gmail'}>
-				<input
-					type="radio"
-					name="provider"
-					value="gmail"
-					checked={provider === 'gmail'}
-					onchange={applyGmailPreset}
-				/>
-				<span>Gmail</span>
-			</label>
+	<section class="paper mail-status">
+		<div class="mail-status-main">
+			<div>
+				<h2 class="section-title">وضعیت ارسال ایمیل</h2>
+				<p class="muted mail-lead">
+					اول مشخص کنید ارسال ایمیل در برنامه روشن باشد یا خاموش.
+				</p>
+			</div>
+			<div
+				class="mail-status-badge"
+				class:is-on={enabled}
+				class:is-off={!enabled}
+				aria-live="polite"
+			>
+				{#if enabled}
+					<span class="mail-status-dot"></span>
+					فعال
+				{:else}
+					<span class="mail-status-dot"></span>
+					غیرفعال
+				{/if}
+			</div>
 		</div>
 
-		{#if provider === 'gmail'}
-			<p class="muted hint-box">
-				پیش‌فرض Gmail: <span class="kbd">smtp.gmail.com</span>، پورت
-				<span class="kbd">465</span> (SSL). در حساب Google، تأیید دو مرحله‌ای را روشن کنید و یک
-				App Password بسازید.
-			</p>
-		{/if}
-
-		<label class="check-row">
-			<input type="checkbox" name="enabled" checked={enabled} />
-			<span>فعال بودن ارسال ایمیل</span>
+		<label class="mail-enable">
+			<input type="checkbox" name="enabled" bind:checked={enabled} />
+			<span>
+				<strong>{enabled ? 'ارسال ایمیل روشن است' : 'ارسال ایمیل خاموش است'}</strong>
+				<small>
+					{#if enabled}
+						تنظیمات SMTP یا Gmail را در باکس فعال کامل کنید و ذخیره کنید.
+					{:else}
+						با روشن کردن، دو روش اتصال کنار هم نمایش داده می‌شود.
+					{/if}
+				</small>
+			</span>
 		</label>
+
+		{#if !enabled}
+			<div class="mail-status-actions">
+				{#if savedEnabled}
+					<p class="muted" style="margin: 0">برای اعمال خاموش بودن، وضعیت را ذخیره کنید.</p>
+				{/if}
+				<button type="submit" formaction="?/save" class="btn-primary">ذخیره وضعیت</button>
+			</div>
+		{/if}
 	</section>
 
-	<section class="paper">
-		<h2 class="section-title">سرور SMTP</h2>
-		<div class="form-grid">
-			<label class="field">
-				<span>میزبان (Host)</span>
-				<input
-					type="text"
-					name="host"
-					required
-					bind:value={host}
-					readonly={provider === 'gmail'}
-					placeholder="smtp.example.com"
-				/>
-			</label>
-			<label class="field">
-				<span>پورت</span>
-				<input
-					type="number"
-					name="port"
-					required
-					min="1"
-					max="65535"
-					bind:value={port}
-					readonly={provider === 'gmail'}
-				/>
-			</label>
-			<label class="check-row field-check">
-				<input
-					type="checkbox"
-					name="secure"
-					checked={secure}
-					disabled={provider === 'gmail'}
-					onchange={(e) => (secure = e.currentTarget.checked)}
-				/>
-				<span>اتصال امن (SSL/TLS)</span>
-			</label>
-			{#if provider === 'gmail'}
-				<input type="hidden" name="secure" value="true" />
-			{/if}
-		</div>
-	</section>
+	{#if enabled}
+		<section class="mail-providers" aria-label="روش اتصال">
+			<!-- SMTP box -->
+			<div class="mail-provider" class:is-active={provider === 'smtp'} class:is-idle={provider !== 'smtp'}>
+				<button
+					type="button"
+					class="mail-provider-pick"
+					onclick={selectSmtp}
+					aria-pressed={provider === 'smtp'}
+				>
+					<span class="mail-provider-title">SMTP سفارشی</span>
+					<span class="mail-provider-desc">سرور ایمیل اختصاصی یا سازمانی</span>
+					{#if provider === 'smtp'}
+						<span class="mail-provider-tag">انتخاب‌شده</span>
+					{:else}
+						<span class="mail-provider-tag muted">برای فعال‌سازی کلیک کنید</span>
+					{/if}
+				</button>
 
-	<section class="paper">
-		<h2 class="section-title">احراز هویت و فرستنده</h2>
-		<div class="form-grid">
-			<label class="field">
-				<span>نام کاربری</span>
-				<input
-					type="text"
-					name="username"
-					bind:value={username}
-					placeholder={provider === 'gmail' ? 'you@gmail.com' : 'smtp-user'}
-					autocomplete="username"
-				/>
-			</label>
-			<label class="field">
-				<span>کلمه عبور / App Password</span>
-				<input
-					type="password"
-					name="password"
-					autocomplete="new-password"
-					placeholder={initial.hasPassword ? 'بدون تغییر (ذخیره‌شده)' : '••••••••'}
-				/>
-			</label>
-			<label class="field">
-				<span>ایمیل فرستنده (From)</span>
-				<input
-					type="text"
-					name="from_email"
-					inputmode="email"
-					required
-					bind:value={fromEmail}
-					placeholder="noreply@example.com"
-				/>
-			</label>
-			<label class="field">
-				<span>نام فرستنده</span>
-				<input type="text" name="from_name" bind:value={fromName} placeholder="azgitwh" />
-			</label>
-		</div>
-	</section>
+				{#if provider === 'smtp'}
+					<div class="mail-provider-body">
+						<div class="mail-grid">
+							<label class="field mail-span-2">
+								<span>میزبان (Host)</span>
+								<input
+									class="ltr-input"
+									type="text"
+									name="host"
+									required
+									bind:value={host}
+									placeholder="smtp.example.com"
+								/>
+							</label>
+							<label class="field">
+								<span>پورت</span>
+								<input
+									class="ltr-input"
+									type="number"
+									name="port"
+									required
+									min="1"
+									max="65535"
+									bind:value={port}
+								/>
+							</label>
+							<label class="mail-check field">
+								<span class="mail-check-spacer" aria-hidden="true">امن</span>
+								<span class="mail-check-control">
+									<input type="checkbox" name="secure" bind:checked={secure} />
+									<span>SSL / TLS</span>
+								</span>
+							</label>
+							<label class="field">
+								<span>نام کاربری</span>
+								<input
+									class="ltr-input"
+									type="text"
+									name="username"
+									bind:value={username}
+									placeholder="smtp-user"
+									autocomplete="username"
+								/>
+							</label>
+							<label class="field">
+								<span>کلمه عبور</span>
+								<input
+									class="ltr-input"
+									type="password"
+									name="password"
+									bind:value={password}
+									autocomplete="new-password"
+									placeholder={settings.hasPassword ? 'بدون تغییر (ذخیره‌شده)' : '••••••••'}
+								/>
+							</label>
+							<label class="field">
+								<span>ایمیل From</span>
+								<input
+									class="ltr-input"
+									type="text"
+									name="from_email"
+									inputmode="email"
+									required
+									bind:value={fromEmail}
+									placeholder="noreply@example.com"
+								/>
+							</label>
+							<label class="field">
+								<span>نام فرستنده</span>
+								<input
+									type="text"
+									name="from_name"
+									bind:value={fromName}
+									placeholder="azgitwh"
+								/>
+							</label>
+						</div>
+						<div class="mail-provider-actions">
+							<button type="submit" formaction="?/save" class="btn-primary">
+								ذخیره تنظیمات SMTP
+							</button>
+							<button type="submit" formaction="?/test" class="btn-secondary">تست اتصال</button>
+						</div>
+					</div>
+				{:else}
+					<div class="mail-provider-idle">
+						<p class="muted">این روش غیرفعال است. برای ویرایش، این باکس را انتخاب کنید.</p>
+					</div>
+				{/if}
+			</div>
 
-	<section class="paper">
-		<h2 class="section-title">عملیات</h2>
-		<div class="mail-actions">
-			<button type="submit" formaction="?/save" class="btn-primary">ذخیره تنظیمات</button>
-			<button type="submit" formaction="?/test" class="btn-secondary">تست اتصال</button>
-		</div>
+			<!-- Gmail box -->
+			<div class="mail-provider" class:is-active={provider === 'gmail'} class:is-idle={provider !== 'gmail'}>
+				<button
+					type="button"
+					class="mail-provider-pick"
+					onclick={selectGmail}
+					aria-pressed={provider === 'gmail'}
+				>
+					<span class="mail-provider-title">Gmail</span>
+					<span class="mail-provider-desc">smtp.gmail.com · پورت 465 · SSL</span>
+					{#if provider === 'gmail'}
+						<span class="mail-provider-tag">انتخاب‌شده</span>
+					{:else}
+						<span class="mail-provider-tag muted">برای فعال‌سازی کلیک کنید</span>
+					{/if}
+				</button>
 
-		<div class="test-send">
-			<label class="field">
-				<span>ارسال ایمیل آزمایشی به</span>
-				<input
-					type="text"
-					name="test_to"
-					inputmode="email"
-					bind:value={testTo}
-					placeholder="recipient@example.com"
-				/>
-			</label>
-			<button type="submit" formaction="?/sendTest" class="btn-secondary">ارسال تست</button>
-		</div>
-	</section>
+				{#if provider === 'gmail'}
+					<div class="mail-provider-body">
+						<p class="hint-box">
+							از <strong>App Password</strong> استفاده کنید (نه رمز اصلی). تأیید دو مرحله‌ای باید روشن
+							باشد.
+						</p>
+						<div class="mail-grid">
+							<label class="field">
+								<span>ایمیل Gmail / نام کاربری</span>
+								<input
+									class="ltr-input"
+									type="text"
+									name="username"
+									bind:value={username}
+									placeholder="you@gmail.com"
+									autocomplete="username"
+								/>
+							</label>
+							<label class="field">
+								<span>App Password</span>
+								<input
+									class="ltr-input"
+									type="password"
+									name="password"
+									bind:value={password}
+									autocomplete="new-password"
+									placeholder={settings.hasPassword ? 'بدون تغییر (ذخیره‌شده)' : '••••••••'}
+								/>
+							</label>
+							<label class="field">
+								<span>ایمیل From</span>
+								<input
+									class="ltr-input"
+									type="text"
+									name="from_email"
+									inputmode="email"
+									required
+									bind:value={fromEmail}
+									placeholder="you@gmail.com"
+								/>
+							</label>
+							<label class="field">
+								<span>نام فرستنده</span>
+								<input
+									type="text"
+									name="from_name"
+									bind:value={fromName}
+									placeholder="azgitwh"
+								/>
+							</label>
+						</div>
+						<div class="mail-provider-actions">
+							<button type="submit" formaction="?/save" class="btn-primary">
+								ذخیره تنظیمات Gmail
+							</button>
+							<button type="submit" formaction="?/test" class="btn-secondary">تست اتصال</button>
+						</div>
+					</div>
+				{:else}
+					<div class="mail-provider-idle">
+						<p class="muted">این روش غیرفعال است. برای ویرایش، این باکس را انتخاب کنید.</p>
+					</div>
+				{/if}
+			</div>
+		</section>
+
+		<section class="paper mail-card mail-card-test">
+			<header class="mail-card-head">
+				<div>
+					<h2 class="section-title">ارسال ایمیل آزمایشی</h2>
+					<p class="muted mail-lead">با تنظیمات باکس فعال، یک پیام تست بفرستید.</p>
+				</div>
+			</header>
+
+			<div class="mail-test-row">
+				<label class="field mail-test-field">
+					<span>گیرنده</span>
+					<input
+						class="ltr-input"
+						type="text"
+						name="test_to"
+						inputmode="email"
+						bind:value={testTo}
+						placeholder="recipient@example.com"
+					/>
+				</label>
+				<button type="submit" formaction="?/sendTest" class="btn-secondary mail-test-btn">
+					ارسال تست
+				</button>
+			</div>
+		</section>
+	{/if}
 </form>

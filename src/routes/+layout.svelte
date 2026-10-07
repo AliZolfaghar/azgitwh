@@ -23,7 +23,7 @@
 </svelte:head>
 
 {#if isAuthed && data.user}
-	<AppShell userEmail={data.user.email}>
+	<AppShell userEmail={data.user.email} userName={data.user.displayName}>
 		{#key pageKey}
 			<div class="page-motion" in:fly={fadeUpFast}>
 				{@render children()}

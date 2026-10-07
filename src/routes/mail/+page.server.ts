@@ -50,7 +50,13 @@ export const actions: Actions = {
 		if (!result.ok) {
 			return fail(400, { action: 'save', ...publicForm(input), message: result.message });
 		}
-		return { action: 'save', success: true as const, message: result.message };
+		const settings = toPublicSettings(await getMailSettings());
+		return {
+			action: 'save',
+			success: true as const,
+			message: result.message,
+			...publicForm(settings)
+		};
 	},
 
 	test: async ({ request }) => {
@@ -60,7 +66,12 @@ export const actions: Actions = {
 		if (!result.ok) {
 			return fail(400, { action: 'test', ...publicForm(input), message: result.message });
 		}
-		return { action: 'test', success: true as const, message: result.message };
+		return {
+			action: 'test',
+			success: true as const,
+			message: result.message,
+			...publicForm(input)
+		};
 	},
 
 	sendTest: async ({ request, locals }) => {
@@ -79,7 +90,7 @@ export const actions: Actions = {
 			action: 'sendTest',
 			success: true as const,
 			message: result.message,
-			test_to: to
+			...publicForm(input, { test_to: to })
 		};
 	}
 };

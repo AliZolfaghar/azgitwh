@@ -31,8 +31,11 @@ export async function updateOwnProfile(
 	if (!isValidEmail(email)) {
 		return { ok: false as const, message: 'ایمیل معتبر نیست.' };
 	}
+	if (!displayName) {
+		return { ok: false as const, message: 'نام کاربر الزامی است.' };
+	}
 	if (displayName.length > 120) {
-		return { ok: false as const, message: 'نام نمایشی حداکثر ۱۲۰ کاراکتر باشد.' };
+		return { ok: false as const, message: 'نام حداکثر ۱۲۰ کاراکتر باشد.' };
 	}
 
 	const db = await getDb();

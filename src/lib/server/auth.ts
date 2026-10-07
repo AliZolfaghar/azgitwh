@@ -12,6 +12,7 @@ const SESSION_DAYS = 7;
 export type AuthUser = {
 	id: number;
 	email: string;
+	displayName: string;
 };
 
 function sessionExpiryIso() {
@@ -34,12 +35,12 @@ export async function verifyCredentials(
 	const db = await getDb();
 	const user = await db('users')
 		.where({ email: email.trim().toLowerCase() })
-		.first<{ id: number; email: string; password_hash: string }>();
+		.first<{ id: number; email: string; display_name: string; password_hash: string }>();
 
 	if (!user) return null;
 	if (!verifyPassword(password, user.password_hash)) return null;
 
-	return { id: user.id, email: user.email };
+	return { id: user.id, email: user.email, displayName: user.display_name || '' };
 }
 
 export async function createSession(user: AuthUser, cookies: Cookies) {
@@ -80,8 +81,20 @@ export async function getUserFromSession(cookies: Cookies): Promise<AuthUser | n
 
 	const db = await getDb();
 	const row = await db('sessions')
-		.where({ id })
-		.first<{ user_id: number; email: string; expires_at: string }>();
+		.join('users', 'users.id', 'sessions.user_id')
+		.select(
+			'sessions.user_id',
+			'sessions.email',
+			'sessions.expires_at',
+			'users.display_name'
+		)
+		.where('sessions.id', id)
+		.first<{
+			user_id: number;
+			email: string;
+			display_name: string;
+			expires_at: string;
+		}>();
 
 	if (!row) {
 		cookies.delete(SESSION_COOKIE, { path: '/' });
@@ -94,5 +107,9 @@ export async function getUserFromSession(cookies: Cookies): Promise<AuthUser | n
 		return null;
 	}
 
-	return { id: row.user_id, email: row.email };
+	return {
+		id: row.user_id,
+		email: row.email,
+		displayName: row.display_name || ''
+	};
 }

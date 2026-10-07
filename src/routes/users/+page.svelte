@@ -66,8 +66,8 @@
 			<thead>
 				<tr>
 					<th style="width: 4rem">شناسه</th>
+					<th>نام</th>
 					<th>ایمیل</th>
-					<th style="width: 9rem">نام نمایشی</th>
 					<th style="width: 9rem">ایجاد</th>
 					<th style="width: 10rem">عملیات</th>
 				</tr>
@@ -76,8 +76,8 @@
 				{#each data.users as user (user.id)}
 					<tr>
 						<td class="mono">{user.id}</td>
-						<td>{user.email}</td>
-						<td class="muted">{user.displayName || '—'}</td>
+						<td>{user.displayName || '—'}</td>
+						<td class="muted">{user.email}</td>
 						<td class="muted">{formatDate(user.createdAt)}</td>
 						<td>
 							<div class="row-actions">
@@ -109,6 +109,18 @@
 <Modal open={modal?.type === 'create'} title="افزودن کاربر" onclose={closeModal}>
 	<form id="user-create-form" method="POST" action="?/create" class="modal-stack">
 		<label class="field">
+			<span>نام</span>
+			<input
+				type="text"
+				name="display_name"
+				required
+				maxlength="120"
+				autocomplete="name"
+				placeholder="مثلاً سجاد"
+				value={form && 'display_name' in form ? String(form.display_name ?? '') : ''}
+			/>
+		</label>
+		<label class="field">
 			<span>ایمیل</span>
 			<input
 				type="text"
@@ -117,6 +129,7 @@
 				required
 				autocomplete="off"
 				placeholder="user@example.com"
+				value={form && form.action === 'create' && 'email' in form ? String(form.email ?? '') : ''}
 			/>
 		</label>
 		<label class="field">
@@ -135,8 +148,33 @@
 		<form id="user-edit-form" method="POST" action="?/update" class="modal-stack">
 			<input type="hidden" name="id" value={modal.user.id} />
 			<label class="field">
+				<span>نام</span>
+				<input
+					type="text"
+					name="display_name"
+					required
+					maxlength="120"
+					autocomplete="name"
+					value={
+						form && form.action === 'update' && 'display_name' in form
+							? String(form.display_name ?? '')
+							: modal.user.displayName
+					}
+				/>
+			</label>
+			<label class="field">
 				<span>ایمیل</span>
-				<input type="text" name="email" inputmode="email" required value={modal.user.email} />
+				<input
+					type="text"
+					name="email"
+					inputmode="email"
+					required
+					value={
+						form && form.action === 'update' && 'email' in form
+							? String(form.email ?? '')
+							: modal.user.email
+					}
+				/>
 			</label>
 			<label class="field">
 				<span>کلمه عبور جدید</span>
@@ -148,7 +186,6 @@
 					placeholder="خالی = بدون تغییر"
 				/>
 			</label>
-			<p class="muted" style="margin: 0">نام نمایشی را هر کاربر از صفحهٔ پروفایل خودش ویرایش می‌کند.</p>
 		</form>
 	{/if}
 	{#snippet footer()}
@@ -160,7 +197,9 @@
 <Modal open={modal?.type === 'delete'} title="حذف کاربر" onclose={closeModal}>
 	{#if modal?.type === 'delete'}
 		<p class="muted" style="margin: 0">
-			کاربر <strong>{modal.user.email}</strong> حذف شود؟
+			کاربر
+			<strong>{modal.user.displayName || modal.user.email}</strong>
+			({modal.user.email}) حذف شود؟
 		</p>
 		<form id="user-delete-form" method="POST" action="?/delete">
 			<input type="hidden" name="id" value={modal.user.id} />

@@ -13,12 +13,14 @@
 		captureForms?: boolean;
 	}
 
-	let { children, delayMs = 100, captureForms = true }: Props = $props();
+	// Short delay so quick saves don't flash; long SMTP tests still show the overlay promptly.
+	let { children, delayMs = 80, captureForms = true }: Props = $props();
 
 	let root = $state<HTMLDivElement | undefined>();
 	let visible = $state(false);
 
-	const pending = $derived(Boolean(navigating) || contentLoading.busy);
+	// In SvelteKit 3, `navigating` is always an object; idle means `.to` / `.type` are null.
+	const pending = $derived(navigating.to !== null || contentLoading.busy);
 
 	$effect(() => {
 		if (!root || !captureForms) return;
