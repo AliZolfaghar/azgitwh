@@ -318,23 +318,29 @@
 			</p>
 		</div>
 		<div class="report-detail-actions">
-			<div class="invoice-lang-switch" role="group" aria-label={copy.ui.language}>
-				<form method="POST" action="?/setLocale">
-					<input type="hidden" name="locale" value="fa" />
-					<button type="submit" class="btn-secondary" class:is-active={locale === 'fa'}>
-						فارسی
-					</button>
+			{#if data.canManage}
+				<div class="invoice-lang-switch" role="group" aria-label={copy.ui.language}>
+					<form method="POST" action="?/setLocale">
+						<input type="hidden" name="locale" value="fa" />
+						<button type="submit" class="btn-secondary" class:is-active={locale === 'fa'}>
+							فارسی
+						</button>
+					</form>
+					<form method="POST" action="?/setLocale">
+						<input type="hidden" name="locale" value="en" />
+						<button type="submit" class="btn-secondary" class:is-active={locale === 'en'}>
+							English
+						</button>
+					</form>
+				</div>
+				<form method="POST" action="?/regenerate" data-no-loader onsubmit={onRegenerateSubmit}>
+					<button type="submit" class="btn-primary">{copy.ui.regenerate}</button>
 				</form>
-				<form method="POST" action="?/setLocale">
-					<input type="hidden" name="locale" value="en" />
-					<button type="submit" class="btn-secondary" class:is-active={locale === 'en'}>
-						English
-					</button>
-				</form>
-			</div>
-			<form method="POST" action="?/regenerate" data-no-loader onsubmit={onRegenerateSubmit}>
-				<button type="submit" class="btn-primary">{copy.ui.regenerate}</button>
-			</form>
+			{:else}
+				<span class="btn-secondary is-active" aria-current="true">
+					{locale === 'en' ? 'English' : 'فارسی'}
+				</span>
+			{/if}
 			<button type="button" class="btn-secondary" onclick={openShares}>
 				{copy.ui.developerShares}
 			</button>
@@ -342,9 +348,11 @@
 			<button type="button" class="btn-secondary" onclick={downloadExcel}>
 				{copy.ui.downloadExcel}
 			</button>
-			<form method="POST" action="?/delete" data-no-loader onsubmit={onDeleteInvoiceSubmit}>
-				<button type="submit" class="btn-danger">{copy.ui.deleteInvoice}</button>
-			</form>
+			{#if data.canManage}
+				<form method="POST" action="?/delete" data-no-loader onsubmit={onDeleteInvoiceSubmit}>
+					<button type="submit" class="btn-danger">{copy.ui.deleteInvoice}</button>
+				</form>
+			{/if}
 		</div>
 	</header>
 
@@ -390,17 +398,19 @@
 		<h2 class="section-title">{copy.ui.detailsTitle}</h2>
 		<div class="toolbar-actions">
 			<span class="muted">{copy.ui.rowsCount(invoice.lines.length)}</span>
-			<button
-				type="button"
-				class="btn-primary"
-				onclick={() => {
-					emailChoice = invoiceEmails[0] ?? '__other__';
-					customEmail = '';
-					addOpen = true;
-				}}
-			>
-				{copy.ui.addItem}
-			</button>
+			{#if data.canManage}
+				<button
+					type="button"
+					class="btn-primary"
+					onclick={() => {
+						emailChoice = invoiceEmails[0] ?? '__other__';
+						customEmail = '';
+						addOpen = true;
+					}}
+				>
+					{copy.ui.addItem}
+				</button>
+			{/if}
 		</div>
 	</div>
 	<div class="table-scroll">
@@ -417,7 +427,9 @@
 					<th>{copy.table.hours}</th>
 					<th>{copy.table.payment}</th>
 					<th>{copy.table.messages}</th>
-					<th>{copy.table.actions}</th>
+					{#if data.canManage}
+						<th>{copy.table.actions}</th>
+					{/if}
 				</tr>
 			</thead>
 			<tbody>
@@ -447,34 +459,40 @@
 						<td class="muted">{line.repos || '—'}</td>
 						<td class="mono">{line.commits || '—'}</td>
 						<td class="invoice-hours-cell">
-							<button
-								type="button"
-								class="invoice-hours-value mono"
-								title={locale === 'en' ? 'Double-click to edit' : 'برای ویرایش دوبار کلیک کنید'}
-								ondblclick={() => startEditHours(line)}
-							>
-								{formatNumber(line.hours)}
-							</button>
+							{#if data.canManage}
+								<button
+									type="button"
+									class="invoice-hours-value mono"
+									title={locale === 'en' ? 'Double-click to edit' : 'برای ویرایش دوبار کلیک کنید'}
+									ondblclick={() => startEditHours(line)}
+								>
+									{formatNumber(line.hours)}
+								</button>
+							{:else}
+								<span class="mono">{formatNumber(line.hours)}</span>
+							{/if}
 						</td>
 						<td class="mono">
 							{line.payment > 0 ? formatNumber(line.payment) : '—'}
 						</td>
 						<td class="muted">{line.messages || '—'}</td>
-						<td>
-							{#if line.source === 'manual'}
-								<form
-									method="POST"
-									action="?/deleteLine"
-									data-no-loader
-									onsubmit={onDeleteLineSubmit}
-								>
-									<input type="hidden" name="line_id" value={line.id} />
-									<button type="submit" class="btn-danger btn-compact">{copy.ui.deleteManual}</button>
-								</form>
-							{:else}
-								<span class="muted">—</span>
-							{/if}
-						</td>
+						{#if data.canManage}
+							<td>
+								{#if line.source === 'manual'}
+									<form
+										method="POST"
+										action="?/deleteLine"
+										data-no-loader
+										onsubmit={onDeleteLineSubmit}
+									>
+										<input type="hidden" name="line_id" value={line.id} />
+										<button type="submit" class="btn-danger btn-compact">{copy.ui.deleteManual}</button>
+									</form>
+								{:else}
+									<span class="muted">—</span>
+								{/if}
+							</td>
+						{/if}
 					</tr>
 				{/each}
 			</tbody>
@@ -488,7 +506,7 @@
 							{tableTotals.payment > 0 ? formatNumber(tableTotals.payment) : '—'}
 						</strong>
 					</td>
-					<td colspan="2"></td>
+					<td colspan={data.canManage ? 2 : 1}></td>
 				</tr>
 			</tfoot>
 		</table>

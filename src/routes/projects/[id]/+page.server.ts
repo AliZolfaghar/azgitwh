@@ -1,4 +1,8 @@
-import { assertCanAccessProject } from '#lib/server/projectMembers.js';
+import {
+	assertCanAccessProject,
+	assertCanManageProject,
+	canManageProject
+} from '#lib/server/projectMembers.js';
 import { getProjectById } from '#lib/server/projects.js';
 import {
 	addRepository,
@@ -44,6 +48,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	return {
 		pageTitle: `ریپوها · ${project.name}`,
+		canManage: await canManageProject(locals.user, projectId),
 		project: {
 			id: project.id,
 			name: project.name,
@@ -69,6 +74,7 @@ export const actions: Actions = {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const input = readRepoInput(form);
@@ -84,6 +90,7 @@ export const actions: Actions = {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const repoId = Number(form.get('id'));
@@ -100,6 +107,7 @@ export const actions: Actions = {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const repoId = Number(form.get('id'));
@@ -114,6 +122,7 @@ export const actions: Actions = {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const repoId = Number(form.get('id'));

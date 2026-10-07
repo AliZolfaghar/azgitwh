@@ -1,5 +1,5 @@
 import type { AuthUser } from './auth.js';
-import { isAdmin } from './auth.js';
+import { isAdmin, isOperator } from './auth.js';
 import { getDb } from './db.js';
 import { error } from '@sveltejs/kit';
 
@@ -28,6 +28,26 @@ export async function canAccessProject(user: AuthUser | null | undefined, projec
 export async function assertCanAccessProject(user: AuthUser | null | undefined, projectId: number) {
 	const ok = await canAccessProject(user, projectId);
 	if (!ok) error(403, 'دسترسی به این پروژه ندارید');
+}
+
+/**
+ * Full project workspace control (repos/invoices):
+ * - admin: always
+ * - operator: only on projects they are a member of
+ * - user: view-only
+ */
+export async function canManageProject(user: AuthUser | null | undefined, projectId: number) {
+	if (!user) return false;
+	if (isAdmin(user)) return true;
+	if (isOperator(user)) return isProjectMember(projectId, user.id);
+	return false;
+}
+
+export async function assertCanManageProject(user: AuthUser | null | undefined, projectId: number) {
+	const ok = await canManageProject(user, projectId);
+	if (!ok) {
+		error(403, 'برای تغییر این پروژه باید ادمین یا اوپراتور دارای دسترسی باشید');
+	}
 }
 
 export async function listProjectMembers(projectId: number): Promise<ProjectMember[]> {

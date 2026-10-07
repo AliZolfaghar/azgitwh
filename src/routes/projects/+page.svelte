@@ -235,9 +235,11 @@
 	<Modal open={modal?.type === 'members'} title="کاربران دارای دسترسی" onclose={closeModal} wide>
 		{#if modal?.type === 'members'}
 			<p class="muted" style="margin: 0 0 0.75rem; line-height: 1.7">
-				کاربرانی که تیک می‌خورند می‌توانند پروژه
+				کاربرانی که تیک می‌خورند به پروژه
 				<strong>{modal.project.name}</strong>
-				را در فهرست پروژه‌ها ببینند و وارد آن شوند.
+				دسترسی پیدا می‌کنند:
+				<strong>عادی</strong> فقط مشاهده،
+				<strong>اوپراتور</strong> دسترسی کامل به همان پروژه.
 			</p>
 			<form id="project-members-form" method="POST" action="?/members" class="modal-stack">
 				<input type="hidden" name="id" value={modal.project.id} />
@@ -256,6 +258,13 @@
 								<span>
 									<strong>{user.displayName}</strong>
 									<span class="muted ltr-input">{user.email}</span>
+									<span class="muted">
+										{user.role === 'admin'
+											? 'ادمین'
+											: user.role === 'operator'
+												? 'اوپراتور'
+												: 'عادی'}
+									</span>
 								</span>
 							</label>
 						{/each}

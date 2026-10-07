@@ -8,7 +8,11 @@ import {
 	updateInvoiceLineHours,
 	updateInvoiceLocale
 } from '#lib/server/projectInvoices.js';
-import { assertCanAccessProject } from '#lib/server/projectMembers.js';
+import {
+	assertCanAccessProject,
+	assertCanManageProject,
+	canManageProject
+} from '#lib/server/projectMembers.js';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -31,6 +35,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	return {
 		pageTitle: `${invoice.title} · ${invoice.projectName}`,
+		canManage: await canManageProject(locals.user, projectId),
 		project: {
 			id: projectId,
 			name: invoice.projectName
@@ -49,6 +54,7 @@ export const actions: Actions = {
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const locale = normalizeInvoiceLocale(form.get('locale'));
@@ -65,6 +71,7 @@ export const actions: Actions = {
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const email = String(form.get('email') ?? '').trim();
@@ -99,6 +106,7 @@ export const actions: Actions = {
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const lineId = String(form.get('line_id') ?? '').trim();
@@ -123,6 +131,7 @@ export const actions: Actions = {
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const lineId = String(form.get('line_id') ?? '').trim();
@@ -139,6 +148,7 @@ export const actions: Actions = {
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const result = await regenerateInvoice(projectId, invoiceId);
 		if (!result.ok) {
@@ -153,6 +163,7 @@ export const actions: Actions = {
 		const invoiceId = parseId(params.invoiceId);
 		if (!projectId || !invoiceId) return fail(404, { message: 'یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const result = await deleteProjectInvoice(projectId, invoiceId);
 		if (!result.ok) {

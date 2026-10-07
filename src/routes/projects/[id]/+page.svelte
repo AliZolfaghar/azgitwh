@@ -74,7 +74,9 @@
 		<div class="toolbar-actions">
 			<span class="muted">{data.repositories.length} مورد</span>
 			<a class="btn-secondary" href="/projects/{data.project.id}/invoice">فاکتور</a>
-			<button type="button" class="btn-primary" onclick={openCreate}>افزودن ریپازیتوری</button>
+			{#if data.canManage}
+				<button type="button" class="btn-primary" onclick={openCreate}>افزودن ریپازیتوری</button>
+			{/if}
 		</div>
 	</div>
 
@@ -91,7 +93,9 @@
 						<th>مسیر / آدرس</th>
 						<th style="width: 7rem">شاخه</th>
 						<th style="width: 6.5rem">فعال</th>
-						<th style="width: 10rem">عملیات</th>
+						{#if data.canManage}
+							<th style="width: 10rem">عملیات</th>
+						{/if}
 					</tr>
 				</thead>
 				<tbody>
@@ -111,36 +115,42 @@
 							<td class="ltr-input">{repo.location}</td>
 							<td class="muted">{repo.branch || '—'}</td>
 							<td>
-								<form method="POST" action="?/toggleEnabled" class="switch-form">
-									<input type="hidden" name="id" value={repo.id} />
-									<label class="switch" title={repo.enabled ? 'فعال' : 'غیرفعال'}>
-										<input
-											type="checkbox"
-											name="enabled"
-											checked={repo.enabled}
-											onchange={(event) => event.currentTarget.form?.requestSubmit()}
-										/>
-										<span class="switch-track" aria-hidden="true">
-											<span class="switch-thumb"></span>
-										</span>
-										<span class="sr-only">{repo.enabled ? 'فعال' : 'غیرفعال'}</span>
-									</label>
-								</form>
+								{#if data.canManage}
+									<form method="POST" action="?/toggleEnabled" class="switch-form">
+										<input type="hidden" name="id" value={repo.id} />
+										<label class="switch" title={repo.enabled ? 'فعال' : 'غیرفعال'}>
+											<input
+												type="checkbox"
+												name="enabled"
+												checked={repo.enabled}
+												onchange={(event) => event.currentTarget.form?.requestSubmit()}
+											/>
+											<span class="switch-track" aria-hidden="true">
+												<span class="switch-thumb"></span>
+											</span>
+											<span class="sr-only">{repo.enabled ? 'فعال' : 'غیرفعال'}</span>
+										</label>
+									</form>
+								{:else}
+									<span class="muted">{repo.enabled ? 'فعال' : 'غیرفعال'}</span>
+								{/if}
 							</td>
-							<td>
-								<div class="row-actions">
-									<button type="button" class="btn-secondary" onclick={() => openEdit(repo)}>
-										ویرایش
-									</button>
-									<button
-										type="button"
-										class="btn-danger"
-										onclick={() => (modal = { type: 'delete', repo })}
-									>
-										حذف
-									</button>
-								</div>
-							</td>
+							{#if data.canManage}
+								<td>
+									<div class="row-actions">
+										<button type="button" class="btn-secondary" onclick={() => openEdit(repo)}>
+											ویرایش
+										</button>
+										<button
+											type="button"
+											class="btn-danger"
+											onclick={() => (modal = { type: 'delete', repo })}
+										>
+											حذف
+										</button>
+									</div>
+								</td>
+							{/if}
 						</tr>
 					{/each}
 				</tbody>
@@ -149,6 +159,7 @@
 	{/if}
 </section>
 
+{#if data.canManage}
 <Modal open={modal?.type === 'create'} title="افزودن ریپازیتوری" onclose={closeModal} wide>
 	<form id="repo-create-form" method="POST" action="?/add" class="modal-stack">
 		<div class="provider-tabs">
@@ -274,3 +285,4 @@
 		<button type="submit" form="repo-delete-form" class="btn-danger">حذف قطعی</button>
 	{/snippet}
 </Modal>
+{/if}

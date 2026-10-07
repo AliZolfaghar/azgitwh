@@ -84,7 +84,11 @@
 						<td>{user.displayName || '—'}</td>
 						<td class="muted">{user.email}</td>
 						<td>
-							<span class="role-badge" class:role-admin={user.role === 'admin'}>
+							<span
+								class="role-badge"
+								class:role-admin={user.role === 'admin'}
+								class:role-operator={user.role === 'operator'}
+							>
 								{user.roleLabel}
 							</span>
 						</td>
@@ -146,6 +150,7 @@
 			<span>سطح دسترسی</span>
 			<select name="role" value={formRole('user')}>
 				<option value="user">{data.roleLabels.user}</option>
+				<option value="operator">{data.roleLabels.operator}</option>
 				<option value="admin">{data.roleLabels.admin}</option>
 			</select>
 		</label>
@@ -197,6 +202,7 @@
 				<span>سطح دسترسی</span>
 				<select name="role" value={formRole(modal.user.role)}>
 					<option value="user">{data.roleLabels.user}</option>
+					<option value="operator">{data.roleLabels.operator}</option>
 					<option value="admin">{data.roleLabels.admin}</option>
 				</select>
 			</label>
@@ -248,6 +254,12 @@
 	.role-badge.role-admin {
 		background: color-mix(in srgb, var(--color-primary) 18%, transparent);
 		color: var(--color-primary);
+		font-weight: 600;
+	}
+
+	.role-badge.role-operator {
+		background: color-mix(in srgb, #2e7d32 16%, transparent);
+		color: #2e7d32;
 		font-weight: 600;
 	}
 </style>

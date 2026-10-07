@@ -47,8 +47,13 @@
 	<section class="paper">
 		<h2 style="margin: 0 0 0.75rem; font-weight: 500; font-size: 1.15rem">خوش آمدید</h2>
 		<p class="muted" style="margin: 0 0 0.75rem; line-height: 1.8">
-			حساب شما سطح <strong>عادی</strong> دارد. پروژه‌هایی که ادمین به شما دسترسی داده در منوی
-			<a href="/projects">پروژه‌ها</a> دیده می‌شوند.
+			حساب شما سطح <strong>{data.roleLabel}</strong> دارد.
+			{#if data.isOperator}
+				روی پروژه‌هایی که ادمین به شما دسترسی داده، دسترسی کامل (ریپو و فاکتور) دارید.
+			{:else}
+				پروژه‌هایی که ادمین به شما دسترسی داده را فقط می‌توانید مشاهده کنید.
+			{/if}
+			از منوی <a href="/projects">پروژه‌ها</a> وارد شوید.
 		</p>
 		<p class="muted" style="margin: 0">
 			تعداد پروژه‌های در دسترس شما:

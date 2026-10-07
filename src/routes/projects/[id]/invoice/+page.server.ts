@@ -5,7 +5,11 @@ import {
 	periodsFromRange
 } from '#lib/server/gitReport.js';
 import { createInvoiceFromProject, listProjectInvoices } from '#lib/server/projectInvoices.js';
-import { assertCanAccessProject } from '#lib/server/projectMembers.js';
+import {
+	assertCanAccessProject,
+	assertCanManageProject,
+	canManageProject
+} from '#lib/server/projectMembers.js';
 import { getProjectById } from '#lib/server/projects.js';
 import { listProjectRepositories } from '#lib/server/repositories.js';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -31,6 +35,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	return {
 		pageTitle: `فاکتورها · ${project.name}`,
+		canManage: await canManageProject(locals.user, projectId),
 		project: {
 			id: project.id,
 			name: project.name,
@@ -52,6 +57,7 @@ export const actions: Actions = {
 		const projectId = parseId(params.id);
 		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
 		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
 
 		const form = await request.formData();
 		const from = String(form.get('from') ?? '').trim();

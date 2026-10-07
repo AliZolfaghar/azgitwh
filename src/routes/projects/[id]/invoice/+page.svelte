@@ -63,56 +63,63 @@
 		</div>
 	</header>
 
-	{#if data.localEnabledCount === 0}
-		<p class="muted" style="margin: 0">
-			برای صدور فاکتور حداقل یک ریپازیتوری <strong>محلی و فعال</strong> لازم است.
-		</p>
+	{#if data.canManage}
+		{#if data.localEnabledCount === 0}
+			<p class="muted" style="margin: 0">
+				برای صدور فاکتور حداقل یک ریپازیتوری <strong>محلی و فعال</strong> لازم است.
+			</p>
+		{:else}
+			<form method="POST" action="?/create" class="invoice-issue-form">
+				<label class="field">
+					<span>عنوان فاکتور (اختیاری)</span>
+					<input
+						type="text"
+						name="title"
+						maxlength="160"
+						placeholder="مثلاً فاکتور سه‌ماهه اول"
+						value={titleValue}
+					/>
+				</label>
+				<label class="field">
+					<span>از ماه</span>
+					<input class="ltr-input" type="month" name="from" required value={fromValue} />
+				</label>
+				<label class="field">
+					<span>تا ماه</span>
+					<input class="ltr-input" type="month" name="to" required value={toValue} />
+				</label>
+				<label class="field">
+					<span>نرخ ساعتی ({data.project.currencyCode})</span>
+					<input
+						class="ltr-input"
+						type="number"
+						name="hourly_rate"
+						min="0"
+						step="any"
+						placeholder="اختیاری"
+						value={hourlyRateValue}
+					/>
+				</label>
+				<label class="field">
+					<span>زبان</span>
+					<select name="locale" value={localeValue}>
+						<option value="fa">فارسی</option>
+						<option value="en">English</option>
+					</select>
+				</label>
+				<div class="report-create-actions">
+					<button type="submit" class="btn-primary">صدور فاکتور</button>
+					<a class="btn-secondary" href="/params">پارامترها</a>
+				</div>
+			</form>
+			<p class="muted field-hint" style="margin: 0.75rem 0 0">
+				کارکرد از ریپوهای فعال خوانده می‌شود و مستقیم به‌صورت فاکتور ذخیره می‌گردد.
+			</p>
+		{/if}
 	{:else}
-		<form method="POST" action="?/create" class="invoice-issue-form">
-			<label class="field">
-				<span>عنوان فاکتور (اختیاری)</span>
-				<input
-					type="text"
-					name="title"
-					maxlength="160"
-					placeholder="مثلاً فاکتور سه‌ماهه اول"
-					value={titleValue}
-				/>
-			</label>
-			<label class="field">
-				<span>از ماه</span>
-				<input class="ltr-input" type="month" name="from" required value={fromValue} />
-			</label>
-			<label class="field">
-				<span>تا ماه</span>
-				<input class="ltr-input" type="month" name="to" required value={toValue} />
-			</label>
-			<label class="field">
-				<span>نرخ ساعتی ({data.project.currencyCode})</span>
-				<input
-					class="ltr-input"
-					type="number"
-					name="hourly_rate"
-					min="0"
-					step="any"
-					placeholder="اختیاری"
-					value={hourlyRateValue}
-				/>
-			</label>
-			<label class="field">
-				<span>زبان</span>
-				<select name="locale" value={localeValue}>
-					<option value="fa">فارسی</option>
-					<option value="en">English</option>
-				</select>
-			</label>
-			<div class="report-create-actions">
-				<button type="submit" class="btn-primary">صدور فاکتور</button>
-				<a class="btn-secondary" href="/params">پارامترها</a>
-			</div>
-		</form>
-		<p class="muted field-hint" style="margin: 0.75rem 0 0">
-			کارکرد از ریپوهای فعال خوانده می‌شود و مستقیم به‌صورت فاکتور ذخیره می‌گردد.
+		<p class="muted" style="margin: 0; line-height: 1.8">
+			دسترسی شما فقط برای <strong>مشاهده</strong> فاکتورهای این پروژه است. صدور یا ویرایش توسط ادمین یا
+			اوپراتور انجام می‌شود.
 		</p>
 	{/if}
 </section>

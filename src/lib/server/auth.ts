@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import type { Cookies } from '@sveltejs/kit';
 import { getDb } from './db.js';
 import { verifyPassword } from './password.js';
-import { isAdminRole, parseRole, type UserRole } from './roles.js';
+import { isAdminRole, isOperatorRole, parseRole, type UserRole } from './roles.js';
 
 export const SESSION_COOKIE = 'azgitwh_session';
 export const ADMIN_EMAIL = 'admin@local';
@@ -30,6 +30,10 @@ export function isValidEmail(email: string): boolean {
 
 export function isAdmin(user: AuthUser | null | undefined): boolean {
 	return Boolean(user && isAdminRole(user.role));
+}
+
+export function isOperator(user: AuthUser | null | undefined): boolean {
+	return Boolean(user && isOperatorRole(user.role));
 }
 
 export async function verifyCredentials(
