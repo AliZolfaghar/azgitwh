@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import ContentBusy from '#lib/components/ContentBusy.svelte';
+	import { wireBusyForms } from '#lib/wireBusyForms.js';
 	import type { Snippet } from 'svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import {
@@ -22,8 +24,14 @@
 
 	let { userEmail, children }: Props = $props();
 
+	let shellEl = $state<HTMLDivElement | undefined>();
 	let sidebarOpen = $state(true);
 	let mobileOpen = $state(false);
+
+	$effect(() => {
+		if (!shellEl) return;
+		return wireBusyForms(shellEl);
+	});
 
 	type NavItem = {
 		href: string;
@@ -65,7 +73,7 @@
 	></button>
 {/if}
 
-<div class="app-shell">
+<div class="app-shell" bind:this={shellEl}>
 	<aside
 		class="sidebar"
 		class:mini={!sidebarOpen}
@@ -138,7 +146,9 @@
 		</header>
 
 		<main class="content">
-			{@render children()}
+			<ContentBusy captureForms={false}>
+				{@render children()}
+			</ContentBusy>
 		</main>
 	</div>
 </div>

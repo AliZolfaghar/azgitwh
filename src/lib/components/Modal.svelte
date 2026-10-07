@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { fadeFast, fadeUpFast } from '#lib/motion.js';
 	import type { Snippet } from 'svelte';
+	import { fade, fly } from 'svelte/transition';
 
 	interface Props {
 		open: boolean;
@@ -32,6 +34,7 @@
 				onclose();
 			}
 		}}
+		transition:fade={fadeFast}
 	>
 		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 		<div
@@ -43,6 +46,7 @@
 			aria-label={title}
 			onclick={(event) => event.stopPropagation()}
 			onkeydown={(event) => event.stopPropagation()}
+			transition:fly={fadeUpFast}
 		>
 			<header class="modal-header">
 				<h2 class="modal-title">{title}</h2>
