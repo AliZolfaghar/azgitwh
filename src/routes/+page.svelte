@@ -16,12 +16,12 @@
 		<SmallBox
 			title="پروژه"
 			value={String(data.projectCount)}
-			color="#1976d2"
+			color="#0f766e"
 			iconHtml={iconFolder}
 		/>
-		<SmallBox title="ریپازیتوری" value="—" color="#2e7d32" iconHtml={iconGit} />
-		<SmallBox title="نفرساعت تخمینی" value="—" color="#f9a825" iconHtml={iconClock} />
-		<SmallBox title="دیتابیس" value="OK" color="#c62828" iconHtml={iconDatabase} />
+		<SmallBox title="ریپازیتوری" value="—" color="#0e7490" iconHtml={iconGit} />
+		<SmallBox title="نفرساعت تخمینی" value="—" color="#c2410c" iconHtml={iconClock} />
+		<SmallBox title="دیتابیس" value="OK" color="#334155" iconHtml={iconDatabase} />
 	</div>
 
 	<section class="paper">
