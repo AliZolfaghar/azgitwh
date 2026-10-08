@@ -1,4 +1,8 @@
 import {
+	listDeveloperRates,
+	setDeveloperRates
+} from '#lib/server/hourlyRates.js';
+import {
 	assertCanAccessProject,
 	assertCanManageProject,
 	canManageProject
@@ -7,6 +11,7 @@ import { getProjectById } from '#lib/server/projects.js';
 import {
 	addRepository,
 	deleteRepository,
+	listLocalRepoAuthorEmails,
 	listProjectRepositories,
 	setRepositoryEnabled,
 	updateRepository,
@@ -31,7 +36,8 @@ function readRepoInput(form: FormData) {
 		kind: (kind === 'remote' ? 'remote' : 'local') as RepoKind,
 		location: String(form.get('location') ?? ''),
 		branch: String(form.get('branch') ?? ''),
-		enabled: form.get('enabled') === 'on' || form.get('enabled') === 'true'
+		enabled: form.get('enabled') === 'on' || form.get('enabled') === 'true',
+		hourlyRate: String(form.get('hourly_rate') ?? '')
 	};
 }
 
@@ -45,6 +51,33 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!project) error(404, 'پروژه یافت نشد');
 
 	const repositories = await listProjectRepositories(projectId);
+	const repoExtras = await Promise.all(
+		repositories.map(async (repo) => {
+			const rates = await listDeveloperRates(projectId, repo.id);
+			let authorEmails: string[] = [];
+			let authorEmailsError: string | null = null;
+			if (repo.kind === 'local') {
+				const authors = await listLocalRepoAuthorEmails(repo.location, repo.branch);
+				authorEmails = authors.emails;
+				if (!authors.ok) authorEmailsError = authors.message;
+			} else {
+				authorEmailsError = 'ریپوی آنلاین فعلاً برای خواندن ایمیل پشتیبانی نمی‌شود.';
+			}
+
+			const savedEmails = rates.map((item) => item.email.toLowerCase());
+			const emails = [...new Set([...authorEmails, ...savedEmails])].sort((a, b) =>
+				a.localeCompare(b)
+			);
+
+			return {
+				repoId: repo.id,
+				developerRates: rates,
+				authorEmails: emails,
+				authorEmailsError
+			};
+		})
+	);
+	const extrasByRepo = Object.fromEntries(repoExtras.map((item) => [item.repoId, item]));
 
 	return {
 		pageTitle: `ریپوها · ${project.name}`,
@@ -55,17 +88,25 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			description: project.description,
 			currencyCode: project.currency_code,
 			currencyLabel: `${project.currency_name_fa ?? project.currency_code} (${project.currency_code})`,
-			currencySymbol: project.currency_symbol ?? project.currency_code
+			currencySymbol: project.currency_symbol ?? project.currency_code,
+			hourlyRate: project.hourlyRate
 		},
-		repositories: repositories.map((repo) => ({
-			id: repo.id,
-			name: repo.name,
-			kind: repo.kind,
-			location: repo.location,
-			branch: repo.branch,
-			enabled: Boolean(repo.enabled),
-			createdAt: toIso(repo.created_at)
-		}))
+		repositories: repositories.map((repo) => {
+			const extra = extrasByRepo[repo.id];
+			return {
+				id: repo.id,
+				name: repo.name,
+				kind: repo.kind,
+				location: repo.location,
+				branch: repo.branch,
+				enabled: Boolean(repo.enabled),
+				hourlyRate: repo.hourlyRate,
+				developerRates: extra?.developerRates ?? [],
+				authorEmails: extra?.authorEmails ?? [],
+				authorEmailsError: extra?.authorEmailsError ?? null,
+				createdAt: toIso(repo.created_at)
+			};
+		})
 	};
 };
 
@@ -132,5 +173,40 @@ export const actions: Actions = {
 			return fail(400, { action: 'toggleEnabled', id: repoId, message: result.message });
 		}
 		return { action: 'toggleEnabled', success: true as const, message: result.message };
+	},
+
+	developerRates: async ({ request, params, locals }) => {
+		const projectId = parseId(params.id);
+		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
+
+		const form = await request.formData();
+		const repoId = Number(form.get('id'));
+		const emails = form.getAll('dev_email').map((value) => String(value ?? '').trim());
+		const rates = form.getAll('dev_rate').map((value) => String(value ?? '').trim());
+		const entries: Array<{ email: string; hourlyRate: number }> = [];
+
+		for (let i = 0; i < Math.max(emails.length, rates.length); i += 1) {
+			const email = emails[i] ?? '';
+			const rateRaw = rates[i] ?? '';
+			if (!email.trim() || !rateRaw.trim()) continue;
+			const hourlyRate = Number(rateRaw);
+			entries.push({ email, hourlyRate });
+		}
+
+		const result = await setDeveloperRates(projectId, repoId, entries);
+		if (!result.ok) {
+			return fail(400, { action: 'developerRates', id: repoId, message: result.message });
+		}
+
+		return {
+			action: 'developerRates',
+			success: true as const,
+			message:
+				result.count === 0
+					? 'نرخ اختصاصی برنامه‌نویس‌ها پاک شد.'
+					: `${result.count} نرخ برنامه‌نویس ذخیره شد.`
+		};
 	}
 };

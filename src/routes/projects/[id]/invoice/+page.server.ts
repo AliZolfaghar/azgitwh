@@ -40,7 +40,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			id: project.id,
 			name: project.name,
 			currencyCode: project.currency_code,
-			currencyLabel: `${project.currency_name_fa ?? project.currency_code} (${project.currency_code})`
+			currencyLabel: `${project.currency_name_fa ?? project.currency_code} (${project.currency_code})`,
+			hourlyRate: project.hourlyRate
 		},
 		enabledCount: repositories.filter((repo) => Boolean(repo.enabled)).length,
 		localEnabledCount: repositories.filter(
@@ -64,16 +65,13 @@ export const actions: Actions = {
 		const to = String(form.get('to') ?? '').trim();
 		const title = String(form.get('title') ?? '').trim();
 		const locale = normalizeInvoiceLocale(form.get('locale'));
-		const hourlyRateRaw = String(form.get('hourly_rate') ?? '').trim();
-		const hourlyRate = hourlyRateRaw === '' ? 0 : Number(hourlyRateRaw);
 		const periods = periodsFromRange(from, to);
 
 		const values = {
 			from,
 			to,
 			title,
-			locale,
-			hourly_rate: hourlyRateRaw
+			locale
 		};
 
 		if (!periods || !isYearMonth(from) || !isYearMonth(to)) {
@@ -84,18 +82,9 @@ export const actions: Actions = {
 			});
 		}
 
-		if (!Number.isFinite(hourlyRate) || hourlyRate < 0) {
-			return fail(400, {
-				action: 'create',
-				...values,
-				message: 'نرخ ساعتی نامعتبر است.'
-			});
-		}
-
 		const result = await createInvoiceFromProject(projectId, {
 			periods,
 			title: title || undefined,
-			hourlyRate,
 			locale,
 			createdBy: locals.user?.id ?? null
 		});

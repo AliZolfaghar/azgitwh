@@ -51,6 +51,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			description: project.description,
 			currencyCode: project.currency_code,
 			currencyLabel: `${project.currency_name_fa ?? project.currency_code} (${project.currency_code})`,
+			hourlyRate: project.hourlyRate,
 			repoCount: repoCounts.get(project.id) ?? 0,
 			memberCount: memberCounts.get(project.id) ?? 0,
 			memberIds: memberIdsByProject.get(project.id) ?? [],
@@ -70,12 +71,14 @@ export const actions: Actions = {
 		const name = String(form.get('name') ?? '');
 		const description = String(form.get('description') ?? '');
 		const currencyCode = String(form.get('currency_code') ?? 'USD');
+		const hourlyRate = String(form.get('hourly_rate') ?? '');
 
 		const result = await createProject(
 			name,
 			description,
 			currencyCode,
-			locals.user?.id ?? null
+			locals.user?.id ?? null,
+			hourlyRate
 		);
 		if (!result.ok) {
 			return fail(400, {
@@ -83,6 +86,7 @@ export const actions: Actions = {
 				name,
 				description,
 				currency_code: currencyCode,
+				hourly_rate: hourlyRate,
 				message: result.message
 			});
 		}
@@ -100,8 +104,9 @@ export const actions: Actions = {
 		const name = String(form.get('name') ?? '');
 		const description = String(form.get('description') ?? '');
 		const currencyCode = String(form.get('currency_code') ?? 'USD');
+		const hourlyRate = String(form.get('hourly_rate') ?? '');
 
-		const result = await updateProject(id, name, description, currencyCode);
+		const result = await updateProject(id, name, description, currencyCode, hourlyRate);
 		if (!result.ok) {
 			return fail(400, {
 				action: 'update',
@@ -109,6 +114,7 @@ export const actions: Actions = {
 				name,
 				description,
 				currency_code: currencyCode,
+				hourly_rate: hourlyRate,
 				message: result.message
 			});
 		}

@@ -96,12 +96,13 @@ export async function buildInvoiceWorkbook(
 		{ key: 'repos', width: 22 },
 		{ key: 'commits', width: 10 },
 		{ key: 'hours', width: 11 },
+		{ key: 'rate', width: 10 },
 		{ key: 'payment', width: 12 },
 		{ key: 'messages', width: 48 }
 	];
 
 	// Title
-	sheet.mergeCells('A1:J1');
+	sheet.mergeCells('A1:K1');
 	const titleCell = sheet.getCell('A1');
 	titleCell.value = invoice.title;
 	titleCell.font = {
@@ -114,7 +115,7 @@ export async function buildInvoiceWorkbook(
 	sheet.getRow(1).height = 28;
 
 	// Meta
-	sheet.mergeCells('A2:J2');
+	sheet.mergeCells('A2:K2');
 	const metaCell = sheet.getCell('A2');
 	metaCell.value = [
 		invoice.projectName,
@@ -178,10 +179,10 @@ export async function buildInvoiceWorkbook(
 		});
 	});
 
-	sheet.mergeCells('C7:J7');
+	sheet.mergeCells('C7:K7');
 
 	// Section title
-	sheet.mergeCells('A9:J9');
+	sheet.mergeCells('A9:K9');
 	const sectionCell = sheet.getCell('A9');
 	sectionCell.value = copy.ui.detailsTitle;
 	sectionCell.font = {
@@ -204,6 +205,7 @@ export async function buildInvoiceWorkbook(
 		copy.table.repos,
 		copy.table.commits,
 		copy.table.hours,
+		copy.table.rate,
 		copy.table.payment,
 		copy.table.messages
 	];
@@ -248,6 +250,7 @@ export async function buildInvoiceWorkbook(
 			line.repos || '—',
 			line.commits || '',
 			line.hours,
+			line.rate > 0 ? line.rate : '',
 			line.payment > 0 ? line.payment : '',
 			line.messages || '—'
 		];
@@ -255,11 +258,11 @@ export async function buildInvoiceWorkbook(
 		values.forEach((value, colIndex) => {
 			const cell = row.getCell(colIndex + 1);
 			cell.value = value;
-			const centerCols = new Set([0, 1, 3, 4, 6, 7, 8]);
+			const centerCols = new Set([0, 1, 3, 4, 6, 7, 8, 9]);
 			styleBodyCell(cell, {
 				align: centerCols.has(colIndex) ? 'center' : isFa ? 'right' : 'left'
 			});
-			if (colIndex === 7 || colIndex === 8) {
+			if (colIndex === 7 || colIndex === 8 || colIndex === 9) {
 				if (typeof value === 'number') cell.numFmt = '#,##0.##';
 			}
 			if (colIndex === 2 || colIndex === 3 || colIndex === 4) {
@@ -282,6 +285,7 @@ export async function buildInvoiceWorkbook(
 		'',
 		totalCommits,
 		Number(totalHours.toFixed(2)),
+		'',
 		totalPayment > 0 ? Number(totalPayment.toFixed(2)) : '',
 		''
 	];
@@ -304,7 +308,7 @@ export async function buildInvoiceWorkbook(
 			vertical: 'middle',
 			horizontal: colIndex === 0 ? (isFa ? 'right' : 'left') : 'center'
 		};
-		if ((colIndex === 7 || colIndex === 8) && typeof value === 'number') {
+		if ((colIndex === 7 || colIndex === 9) && typeof value === 'number') {
 			cell.numFmt = '#,##0.##';
 		}
 	});

@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { normalizeInvoiceLocale, type InvoiceLocale } from '#lib/invoiceLocale.js';
 import { generateProjectReport } from './gitReport.js';
 import { getDb } from './db.js';
+import {
+	loadRateContext,
+	resolveHourlyRate,
+	type RateContext
+} from './hourlyRates.js';
 import { getProjectById } from './projects.js';
 import { getProjectReport } from './projectReports.js';
 
@@ -24,6 +29,8 @@ export type InvoiceLine = {
 	repos: string;
 	commits: number;
 	hours: number;
+	/** Resolved hourly rate used for this line (dev→repo→project). */
+	rate: number;
 	payment: number;
 	messages: string;
 	source: InvoiceLineSource;
@@ -98,20 +105,29 @@ function roundHours(value: number) {
 
 export function normalizeInvoiceLines(
 	lines: Array<Partial<InvoiceLine> & Pick<InvoiceLine, 'email' | 'date' | 'hours'>>,
-	hourlyRate: number
+	rateOrContext: number | RateContext
 ): InvoiceLine[] {
-	const rate = Math.max(0, Number(hourlyRate) || 0);
 	const normalized = lines.map((line) => {
 		const hours = roundHours(Math.max(0, Number(line.hours) || 0));
 		const date = String(line.date ?? '').trim();
+		const email = String(line.email ?? '').trim();
+		const repos = String(line.repos ?? '').trim();
+		const existingRate = line.rate != null ? Number(line.rate) : NaN;
+		const rate =
+			Number.isFinite(existingRate) && existingRate >= 0
+				? existingRate
+				: typeof rateOrContext === 'number'
+					? Math.max(0, Number(rateOrContext) || 0)
+					: resolveHourlyRate(rateOrContext, email, repos);
 		return {
 			id: String(line.id ?? '').trim() || randomUUID(),
-			email: String(line.email ?? '').trim(),
+			email,
 			date,
 			period: String(line.period ?? '').trim() || periodFromDate(date),
-			repos: String(line.repos ?? '').trim(),
+			repos,
 			commits: Math.max(0, Math.floor(Number(line.commits) || 0)),
 			hours,
+			rate,
 			payment: roundMoney(hours * rate),
 			messages: String(line.messages ?? '').trim(),
 			source: line.source === 'manual' ? ('manual' as const) : ('git' as const),
@@ -203,10 +219,11 @@ async function loadInvoiceRow(projectId: number, invoiceId: number) {
 async function persistInvoiceLines(
 	projectId: number,
 	invoiceId: number,
-	hourlyRate: number,
-	lines: InvoiceLine[]
+	lines: Array<Partial<InvoiceLine> & Pick<InvoiceLine, 'email' | 'date' | 'hours'>>,
+	rateContext?: RateContext
 ) {
-	const normalized = normalizeInvoiceLines(lines, hourlyRate);
+	const ctx = rateContext ?? (await loadRateContext(projectId));
+	const normalized = normalizeInvoiceLines(lines, ctx);
 	const totals = totalsFromLines(normalized);
 	const db = await getDb();
 	await db('project_invoices')
@@ -214,7 +231,8 @@ async function persistInvoiceLines(
 		.update({
 			lines_json: JSON.stringify(normalized),
 			total_hours: totals.totalHours,
-			total_payment: totals.totalPayment
+			total_payment: totals.totalPayment,
+			hourly_rate: ctx.projectRate
 		});
 	return { lines: normalized, ...totals };
 }
@@ -224,7 +242,6 @@ export async function createInvoiceFromProject(
 	input: {
 		periods: string[];
 		title?: string;
-		hourlyRate?: number;
 		locale?: InvoiceLocale;
 		createdBy?: number | null;
 	}
@@ -242,7 +259,7 @@ export async function createInvoiceFromProject(
 	if (!generated.ok) return generated;
 
 	const locale = normalizeInvoiceLocale(input.locale);
-	const hourlyRate = Math.max(0, Number(input.hourlyRate ?? 0) || 0);
+	const rateContext = await loadRateContext(projectId);
 	const lines = normalizeInvoiceLines(
 		generated.report.dailyRows.map((row) => ({
 			id: randomUUID(),
@@ -255,7 +272,7 @@ export async function createInvoiceFromProject(
 			messages: row.messages,
 			source: 'git' as const
 		})),
-		hourlyRate
+		rateContext
 	);
 
 	if (!lines.length) {
@@ -275,7 +292,7 @@ export async function createInvoiceFromProject(
 		title,
 		locale,
 		currency_code: project.currency_code,
-		hourly_rate: hourlyRate,
+		hourly_rate: rateContext.projectRate,
 		total_hours: totals.totalHours,
 		total_payment: totals.totalPayment,
 		period_from: periodFrom,
@@ -321,6 +338,7 @@ export async function regenerateInvoice(projectId: number, invoiceId: number) {
 	const generated = await generateProjectReport(projectId, periods);
 	if (!generated.ok) return generated;
 
+	const rateContext = await loadRateContext(projectId);
 	const existing = normalizeInvoiceLines(
 		parseJson<Partial<InvoiceLine>[]>(row.lines_json, []).map((line) => ({
 			...line,
@@ -328,7 +346,7 @@ export async function regenerateInvoice(projectId: number, invoiceId: number) {
 			date: String(line.date ?? ''),
 			hours: Number(line.hours) || 0
 		})),
-		Number(row.hourly_rate)
+		rateContext
 	);
 	const manualLines = existing.filter((line) => line.source === 'manual');
 
@@ -351,7 +369,16 @@ export async function regenerateInvoice(projectId: number, invoiceId: number) {
 	const nextPeriods = generated.report.periods;
 	const nextFrom = nextPeriods[0] ?? periodFrom;
 	const nextTo = nextPeriods.at(-1) ?? periodTo;
-	const normalized = normalizeInvoiceLines([...gitLines, ...manualLines], Number(row.hourly_rate));
+	const normalized = normalizeInvoiceLines(
+		[
+			...gitLines,
+			...manualLines.map((line) => ({
+				...line,
+				rate: undefined
+			}))
+		],
+		rateContext
+	);
 	const totals = totalsFromLines(normalized);
 
 	const db = await getDb();
@@ -361,6 +388,7 @@ export async function regenerateInvoice(projectId: number, invoiceId: number) {
 			lines_json: JSON.stringify(normalized),
 			total_hours: totals.totalHours,
 			total_payment: totals.totalPayment,
+			hourly_rate: rateContext.projectRate,
 			period_from: nextFrom,
 			period_to: nextTo,
 			periods_json: JSON.stringify(nextPeriods)
@@ -409,6 +437,7 @@ export async function getProjectInvoice(
 	if (!row) return null;
 
 	const rawLines = parseJson<Partial<InvoiceLine>[]>(row.lines_json, []);
+	const rateContext = await loadRateContext(projectId);
 	const lines = normalizeInvoiceLines(
 		rawLines.map((line) => ({
 			...line,
@@ -416,14 +445,17 @@ export async function getProjectInvoice(
 			date: String(line.date ?? ''),
 			hours: Number(line.hours) || 0
 		})),
-		Number(row.hourly_rate)
+		rateContext
 	);
 
 	const needsPersist = rawLines.some(
-		(line) => !String(line.id ?? '').trim() || (line.source !== 'git' && line.source !== 'manual')
+		(line) =>
+			!String(line.id ?? '').trim() ||
+			(line.source !== 'git' && line.source !== 'manual') ||
+			line.rate == null
 	);
 	if (needsPersist) {
-		await persistInvoiceLines(projectId, invoiceId, Number(row.hourly_rate), lines);
+		await persistInvoiceLines(projectId, invoiceId, lines, rateContext);
 	}
 
 	let periodFrom = String(row.period_from ?? '');
@@ -483,6 +515,7 @@ export async function addManualInvoiceLine(
 		return { ok: false as const, message: 'نفرساعت نامعتبر است.' };
 	}
 
+	const rateContext = await loadRateContext(projectId);
 	const existing = normalizeInvoiceLines(
 		parseJson<Partial<InvoiceLine>[]>(row.lines_json, []).map((line) => ({
 			...line,
@@ -490,25 +523,29 @@ export async function addManualInvoiceLine(
 			date: String(line.date ?? ''),
 			hours: Number(line.hours) || 0
 		})),
-		Number(row.hourly_rate)
+		rateContext
 	);
 
-	existing.push({
-		id: randomUUID(),
-		row: 0,
-		email,
-		date,
-		period: periodFromDate(date),
-		repos: String(input.repos ?? '').trim(),
-		commits: Math.max(0, Math.floor(Number(input.commits) || 0)),
-		hours: roundHours(hours),
-		payment: 0,
-		messages: String(input.messages ?? '').trim(),
-		source: 'manual',
-		hoursEdited: false
-	});
-
-	await persistInvoiceLines(projectId, invoiceId, Number(row.hourly_rate), existing);
+	await persistInvoiceLines(
+		projectId,
+		invoiceId,
+		[
+			...existing,
+			{
+				id: randomUUID(),
+				email,
+				date,
+				period: periodFromDate(date),
+				repos: String(input.repos ?? '').trim(),
+				commits: Math.max(0, Math.floor(Number(input.commits) || 0)),
+				hours: roundHours(hours),
+				messages: String(input.messages ?? '').trim(),
+				source: 'manual' as const,
+				hoursEdited: false
+			}
+		],
+		rateContext
+	);
 	return { ok: true as const, message: 'آیتم دستی به فاکتور اضافه شد.' };
 }
 
@@ -528,6 +565,7 @@ export async function updateInvoiceLineHours(
 		return { ok: false as const, message: 'نفرساعت نامعتبر است.' };
 	}
 
+	const rateContext = await loadRateContext(projectId);
 	const lines = normalizeInvoiceLines(
 		parseJson<Partial<InvoiceLine>[]>(row.lines_json, []).map((line) => ({
 			...line,
@@ -535,7 +573,7 @@ export async function updateInvoiceLineHours(
 			date: String(line.date ?? ''),
 			hours: Number(line.hours) || 0
 		})),
-		Number(row.hourly_rate)
+		rateContext
 	);
 
 	const target = lines.find((line) => line.id === lineId);
@@ -545,7 +583,7 @@ export async function updateInvoiceLineHours(
 
 	target.hours = roundHours(hours);
 	target.hoursEdited = true;
-	await persistInvoiceLines(projectId, invoiceId, Number(row.hourly_rate), lines);
+	await persistInvoiceLines(projectId, invoiceId, lines, rateContext);
 	return { ok: true as const, message: 'نفرساعت ردیف به‌روز شد.' };
 }
 
@@ -555,6 +593,7 @@ export async function deleteInvoiceLine(projectId: number, invoiceId: number, li
 		return { ok: false as const, message: 'فاکتور یافت نشد.' };
 	}
 
+	const rateContext = await loadRateContext(projectId);
 	const lines = normalizeInvoiceLines(
 		parseJson<Partial<InvoiceLine>[]>(row.lines_json, []).map((line) => ({
 			...line,
@@ -562,7 +601,7 @@ export async function deleteInvoiceLine(projectId: number, invoiceId: number, li
 			date: String(line.date ?? ''),
 			hours: Number(line.hours) || 0
 		})),
-		Number(row.hourly_rate)
+		rateContext
 	);
 
 	const target = lines.find((line) => line.id === lineId);
@@ -578,7 +617,7 @@ export async function deleteInvoiceLine(projectId: number, invoiceId: number, li
 		return { ok: false as const, message: 'فاکتور نمی‌تواند بدون ردیف بماند.' };
 	}
 
-	await persistInvoiceLines(projectId, invoiceId, Number(row.hourly_rate), next);
+	await persistInvoiceLines(projectId, invoiceId, next, rateContext);
 	return { ok: true as const, message: 'ردیف دستی حذف شد.' };
 }
 

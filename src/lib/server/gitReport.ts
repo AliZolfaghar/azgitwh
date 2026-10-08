@@ -256,25 +256,22 @@ function mergeCloseSessions(commits: ReportCommit[], maxGapMinutes: number): Rep
 }
 
 function buildDailyRows(allCommits: ReportCommit[], params: ReportParams): DailyReportRow[] {
-	const byPersonDay = new Map<string, ReportCommit[]>();
+	/** One row per developer / day / repo so hourly rates can resolve correctly. */
+	const byPersonDayRepo = new Map<string, ReportCommit[]>();
 	for (const commit of allCommits) {
-		const key = `${commit.email}\0${commit.dateText}`;
-		const list = byPersonDay.get(key);
+		const key = `${commit.email}\0${commit.dateText}\0${commit.repo}`;
+		const list = byPersonDayRepo.get(key);
 		if (list) list.push(commit);
-		else byPersonDay.set(key, [commit]);
+		else byPersonDayRepo.set(key, [commit]);
 	}
 
-	const dailyRows: DailyReportRow[] = [];
-	for (const [key, commitsDay] of byPersonDay) {
-		const [email, day] = key.split('\0');
+	type DraftRow = DailyReportRow & { rawHours: number };
+	const drafts: DraftRow[] = [];
+
+	for (const [key, commitsDay] of byPersonDayRepo) {
+		const [email, day, repo] = key.split('\0');
 		const mergedDay = mergeCloseSessions(commitsDay, params.max_gap_minutes);
 		const totalDevHoursRaw = mergedDay.reduce((sum, session) => sum + session.dev_hours, 0);
-		const totalDevHours = Math.min(totalDevHoursRaw, params.daily_max_hours);
-		const cappedNote =
-			totalDevHoursRaw > params.daily_max_hours
-				? ` (سقف ${params.daily_max_hours} ساعت اعمال شد)`
-				: '';
-		const repos = [...new Set(mergedDay.map((session) => session.repo))].join(', ');
 		const messages: string[] = [];
 		const files = new Set<string>();
 		let commitCount = 0;
@@ -289,24 +286,56 @@ function buildDailyRows(allCommits: ReportCommit[], params: ReportParams): Daily
 		let fileSummary = fileList.slice(0, 5).join(', ');
 		if (files.size > 5) fileSummary += ` ... +${files.size - 5} فایل دیگر`;
 
-		dailyRows.push({
+		drafts.push({
 			email,
 			date: day,
 			period: day.slice(0, 7),
-			repos,
+			repos: repo,
 			sessions: mergedDay.length,
 			commits: commitCount,
-			hours: Number(totalDevHours.toFixed(2)),
+			hours: Number(totalDevHoursRaw.toFixed(2)),
+			rawHours: totalDevHoursRaw,
 			messages: messages.join(' | '),
 			filesSample: fileSummary,
 			fileCount: files.size,
 			added: mergedDay.reduce((sum, session) => sum + session.added, 0),
 			deleted: mergedDay.reduce((sum, session) => sum + session.deleted, 0),
-			note: cappedNote
+			note: ''
 		});
 	}
 
-	dailyRows.sort((a, b) => a.email.localeCompare(b.email) || a.date.localeCompare(b.date));
+	/** Apply daily max hours across all repos for the same person-day. */
+	const dayTotals = new Map<string, number>();
+	for (const row of drafts) {
+		const dayKey = `${row.email}\0${row.date}`;
+		dayTotals.set(dayKey, (dayTotals.get(dayKey) ?? 0) + row.rawHours);
+	}
+
+	const dailyRows: DailyReportRow[] = drafts.map((row) => {
+		const dayKey = `${row.email}\0${row.date}`;
+		const dayRaw = dayTotals.get(dayKey) ?? row.rawHours;
+		const scale =
+			dayRaw > params.daily_max_hours && dayRaw > 0
+				? params.daily_max_hours / dayRaw
+				: 1;
+		const hours = Number((row.rawHours * scale).toFixed(2));
+		const { rawHours: _raw, ...rest } = row;
+		return {
+			...rest,
+			hours,
+			note:
+				scale < 1
+					? ` (سقف ${params.daily_max_hours} ساعت روزانه بین ریپوها تقسیم شد)`
+					: ''
+		};
+	});
+
+	dailyRows.sort(
+		(a, b) =>
+			a.email.localeCompare(b.email) ||
+			a.date.localeCompare(b.date) ||
+			a.repos.localeCompare(b.repos)
+	);
 	return dailyRows;
 }
 

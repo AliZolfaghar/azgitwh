@@ -2,12 +2,14 @@ import type { AuthUser } from './auth.js';
 import { isAdmin } from './auth.js';
 import { assertCurrencyCode } from './currencies.js';
 import { getDb } from './db.js';
+import { parseHourlyRate, parseHourlyRateInput } from './hourlyRates.js';
 
 export type ProjectRow = {
 	id: number;
 	name: string;
 	description: string;
 	currency_code: string;
+	hourly_rate: number | string | null;
 	created_by: number | null;
 	created_at: string | Date;
 	updated_at: string | Date;
@@ -16,6 +18,7 @@ export type ProjectRow = {
 export type ProjectWithCurrency = ProjectRow & {
 	currency_name_fa: string;
 	currency_symbol: string;
+	hourlyRate: number | null;
 };
 
 export async function countProjects(): Promise<number> {
@@ -32,6 +35,7 @@ export async function listProjects(user?: AuthUser | null): Promise<ProjectWithC
 			'projects.name',
 			'projects.description',
 			'projects.currency_code',
+			'projects.hourly_rate',
 			'projects.created_by',
 			'projects.created_at',
 			'projects.updated_at',
@@ -47,7 +51,11 @@ export async function listProjects(user?: AuthUser | null): Promise<ProjectWithC
 			.where('project_members.user_id', user.id);
 	}
 
-	return query;
+	const rows = await query;
+	return rows.map((row) => ({
+		...row,
+		hourlyRate: parseHourlyRate(row.hourly_rate)
+	}));
 }
 
 export async function getProjectById(id: number): Promise<ProjectWithCurrency | null> {
@@ -59,6 +67,7 @@ export async function getProjectById(id: number): Promise<ProjectWithCurrency | 
 			'projects.name',
 			'projects.description',
 			'projects.currency_code',
+			'projects.hourly_rate',
 			'projects.created_by',
 			'projects.created_at',
 			'projects.updated_at',
@@ -68,14 +77,16 @@ export async function getProjectById(id: number): Promise<ProjectWithCurrency | 
 		.leftJoin('currencies', 'projects.currency_code', 'currencies.code')
 		.where({ 'projects.id': id })
 		.first<ProjectWithCurrency>();
-	return row ?? null;
+	if (!row) return null;
+	return { ...row, hourlyRate: parseHourlyRate(row.hourly_rate) };
 }
 
 export async function createProject(
 	name: string,
 	description: string,
 	currencyCode: string,
-	createdBy: number | null
+	createdBy: number | null,
+	hourlyRateInput: unknown = null
 ) {
 	const trimmedName = name.trim();
 	if (!trimmedName) {
@@ -88,6 +99,9 @@ export async function createProject(
 	const currency = await assertCurrencyCode(currencyCode);
 	if (!currency.ok) return currency;
 
+	const rate = parseHourlyRateInput(hourlyRateInput);
+	if (!rate.ok) return rate;
+
 	const db = await getDb();
 	const exists = await db('projects').where({ name: trimmedName }).first('id');
 	if (exists) {
@@ -98,6 +112,7 @@ export async function createProject(
 		name: trimmedName,
 		description: description.trim(),
 		currency_code: currency.code,
+		hourly_rate: rate.value,
 		created_by: createdBy
 	});
 
@@ -108,7 +123,8 @@ export async function updateProject(
 	id: number,
 	name: string,
 	description: string,
-	currencyCode: string
+	currencyCode: string,
+	hourlyRateInput: unknown = null
 ) {
 	if (!Number.isInteger(id) || id < 1) {
 		return { ok: false as const, message: 'شناسه پروژه نامعتبر است.' };
@@ -124,6 +140,9 @@ export async function updateProject(
 
 	const currency = await assertCurrencyCode(currencyCode);
 	if (!currency.ok) return currency;
+
+	const rate = parseHourlyRateInput(hourlyRateInput);
+	if (!rate.ok) return rate;
 
 	const db = await getDb();
 	const project = await db('projects').where({ id }).first('id');
@@ -143,6 +162,7 @@ export async function updateProject(
 		name: trimmedName,
 		description: description.trim(),
 		currency_code: currency.code,
+		hourly_rate: rate.value,
 		updated_at: new Date()
 	});
 

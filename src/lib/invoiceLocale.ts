@@ -16,6 +16,7 @@ export type InvoiceCopy = {
 		repos: string;
 		commits: string;
 		hours: string;
+		rate: string;
 		payment: string;
 		messages: string;
 		source: string;
@@ -67,7 +68,7 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 	fa: {
 		summary: {
 			subtotal: 'جمع نفرساعت',
-			hourly: 'نرخ یک ساعت',
+			hourly: 'نرخ پیش‌فرض پروژه',
 			totalPrice: 'مبلغ کل',
 			period: 'دوره',
 			hoursUnit: 'نفرساعت'
@@ -80,6 +81,7 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			repos: 'مخزن/پروژه‌ها',
 			commits: 'تعداد کامیت',
 			hours: 'نفر ساعت',
+			rate: 'نرخ',
 			payment: 'پرداخت',
 			messages: 'پیام‌ها',
 			source: 'منبع',
@@ -130,7 +132,7 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 	en: {
 		summary: {
 			subtotal: 'Subtotal',
-			hourly: '1 hour',
+			hourly: 'Project default rate',
 			totalPrice: 'Total Price',
 			period: 'PERIOD',
 			hoursUnit: 'hours'
@@ -143,6 +145,7 @@ const COPY: Record<InvoiceLocale, InvoiceCopy> = {
 			repos: 'Repo/Projects',
 			commits: 'Commits',
 			hours: 'Man-hours',
+			rate: 'Rate',
 			payment: 'Payment',
 			messages: 'Messages',
 			source: 'Source',
@@ -222,6 +225,7 @@ export function invoiceLinesToCsv(
 		repos: string;
 		commits: number;
 		hours: number;
+		rate?: number;
 		payment: number;
 		messages: string;
 		source?: string;
@@ -238,6 +242,7 @@ export function invoiceLinesToCsv(
 		labels.repos,
 		labels.commits,
 		labels.hours,
+		labels.rate,
 		labels.payment,
 		labels.messages
 	];
@@ -251,6 +256,7 @@ export function invoiceLinesToCsv(
 			line.repos,
 			line.commits,
 			line.hours,
+			line.rate ?? '',
 			line.payment,
 			line.messages
 		]

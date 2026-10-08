@@ -425,6 +425,7 @@
 					<th>{copy.table.repos}</th>
 					<th>{copy.table.commits}</th>
 					<th>{copy.table.hours}</th>
+					<th>{copy.table.rate}</th>
 					<th>{copy.table.payment}</th>
 					<th>{copy.table.messages}</th>
 					{#if data.canManage}
@@ -472,6 +473,7 @@
 								<span class="mono">{formatNumber(line.hours)}</span>
 							{/if}
 						</td>
+						<td class="mono">{line.rate > 0 ? formatNumber(line.rate) : '—'}</td>
 						<td class="mono">
 							{line.payment > 0 ? formatNumber(line.payment) : '—'}
 						</td>
@@ -501,6 +503,7 @@
 					<td colspan="6"><strong>{copy.table.total}</strong></td>
 					<td class="mono"><strong>{tableTotals.commits}</strong></td>
 					<td class="mono"><strong>{formatNumber(tableTotals.hours)}</strong></td>
+					<td></td>
 					<td class="mono">
 						<strong>
 							{tableTotals.payment > 0 ? formatNumber(tableTotals.payment) : '—'}

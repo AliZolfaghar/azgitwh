@@ -102,6 +102,7 @@
 						<th style="width: 4rem">شناسه</th>
 						<th>نام</th>
 						<th style="width: 10rem">ارز</th>
+						<th style="width: 7rem">نرخ ساعت</th>
 						<th>توضیحات</th>
 						<th style="width: 5rem">ریپوها</th>
 						{#if data.isAdmin}
@@ -117,6 +118,9 @@
 							<td class="mono">{project.id}</td>
 							<td>{project.name}</td>
 							<td>{project.currencyLabel}</td>
+							<td class="mono">
+								{project.hourlyRate != null ? project.hourlyRate : '—'}
+							</td>
 							<td class="muted">{project.description || '—'}</td>
 							<td class="mono">{project.repoCount}</td>
 							{#if data.isAdmin}
@@ -176,6 +180,17 @@
 				</select>
 			</label>
 			<label class="field">
+				<span>نرخ نفرساعت پیش‌فرض</span>
+				<input
+					class="ltr-input"
+					type="number"
+					name="hourly_rate"
+					min="0"
+					step="any"
+					placeholder="مثلاً 50"
+				/>
+			</label>
+			<label class="field">
 				<span>توضیحات</span>
 				<input type="text" name="description" maxlength="500" placeholder="اختیاری" />
 			</label>
@@ -203,6 +218,18 @@
 							</option>
 						{/each}
 					</select>
+				</label>
+				<label class="field">
+					<span>نرخ نفرساعت پیش‌فرض</span>
+					<input
+						class="ltr-input"
+						type="number"
+						name="hourly_rate"
+						min="0"
+						step="any"
+						placeholder="خالی = بدون نرخ پروژه"
+						value={modal.project.hourlyRate ?? ''}
+					/>
 				</label>
 				<label class="field">
 					<span>توضیحات</span>

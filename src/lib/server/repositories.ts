@@ -1,7 +1,12 @@
+import { execFile } from 'node:child_process';
 import { access, constants } from 'node:fs/promises';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { getDb } from './db.js';
+import { parseHourlyRate, parseHourlyRateInput } from './hourlyRates.js';
 import { getProjectById } from './projects.js';
+
+const execFileAsync = promisify(execFile);
 
 export type RepoKind = 'local' | 'remote';
 
@@ -13,6 +18,8 @@ export type RepositoryRow = {
 	location: string;
 	branch: string;
 	enabled: boolean | number;
+	hourly_rate: number | string | null;
+	hourlyRate: number | null;
 	created_at: string | Date;
 	updated_at: string | Date;
 };
@@ -23,6 +30,7 @@ export type RepositoryInput = {
 	location: string;
 	branch?: string;
 	enabled?: boolean;
+	hourlyRate?: unknown;
 };
 
 function asBool(value: unknown): boolean {
@@ -102,8 +110,47 @@ export async function listProjectRepositories(projectId: number): Promise<Reposi
 	return rows.map((row) => ({
 		...row,
 		kind: normalizeKind(row.kind),
-		enabled: asBool(row.enabled)
+		enabled: asBool(row.enabled),
+		hourlyRate: parseHourlyRate(row.hourly_rate)
 	}));
+}
+
+/** Unique author emails from a local Git repo (author email of commits). */
+export async function listLocalRepoAuthorEmails(
+	location: string,
+	branch?: string
+): Promise<{ ok: true; emails: string[] } | { ok: false; message: string; emails: string[] }> {
+	const trimmed = location.trim();
+	if (!trimmed) {
+		return { ok: false, message: 'مسیر ریپو خالی است.', emails: [] };
+	}
+
+	const revision = branch?.trim() || '--all';
+	try {
+		const { stdout } = await execFileAsync(
+			'git',
+			['log', revision, '--format=%aE'],
+			{
+				cwd: trimmed,
+				encoding: 'utf8',
+				maxBuffer: 32 * 1024 * 1024,
+				windowsHide: true
+			}
+		);
+		const emails = [
+			...new Set(
+				stdout
+					.split(/\r?\n/)
+					.map((line) => line.trim().toLowerCase())
+					.filter((line) => line.includes('@'))
+			)
+		].sort((a, b) => a.localeCompare(b));
+		return { ok: true, emails };
+	} catch (error) {
+		const err = error as { stderr?: string; message?: string };
+		const detail = err.stderr?.toString().trim() || err.message || 'خواندن Git ناموفق بود.';
+		return { ok: false, message: detail, emails: [] };
+	}
 }
 
 export async function countRepositoriesByProject(): Promise<Map<number, number>> {
@@ -143,13 +190,17 @@ export async function addRepository(projectId: number, input: RepositoryInput) {
 		return { ok: false as const, message: 'این ریپازیتوری قبلاً به پروژه اضافه شده است.' };
 	}
 
+	const rate = parseHourlyRateInput(input.hourlyRate);
+	if (!rate.ok) return rate;
+
 	const [id] = await db('project_repositories').insert({
 		project_id: projectId,
 		name,
 		kind,
 		location: validated.location,
 		branch: (input.branch ?? '').trim(),
-		enabled: Boolean(input.enabled)
+		enabled: Boolean(input.enabled),
+		hourly_rate: rate.value
 	});
 
 	return { ok: true as const, id };
@@ -182,6 +233,9 @@ export async function updateRepository(
 		return { ok: false as const, message: 'این مسیر/آدرس قبلاً ثبت شده است.' };
 	}
 
+	const rate = parseHourlyRateInput(input.hourlyRate);
+	if (!rate.ok) return rate;
+
 	await db('project_repositories')
 		.where({ id: repoId })
 		.update({
@@ -190,6 +244,7 @@ export async function updateRepository(
 			location: validated.location,
 			branch: (input.branch ?? '').trim(),
 			enabled: Boolean(input.enabled),
+			hourly_rate: rate.value,
 			updated_at: new Date()
 		});
 
