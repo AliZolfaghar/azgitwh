@@ -11,6 +11,13 @@ import {
 	canManageProject
 } from '#lib/server/projectMembers.js';
 import { getProjectById } from '#lib/server/projects.js';
+import {
+	clearProjectReportParams,
+	getEffectiveReportParams,
+	parseReportParamsForm,
+	saveProjectReportParams,
+	toPublicParams
+} from '#lib/server/reportParams.js';
 import { listProjectRepositories } from '#lib/server/repositories.js';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -32,6 +39,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const repositories = await listProjectRepositories(projectId);
 	const defaults = defaultPeriodRange();
 	const invoices = await listProjectInvoices(projectId);
+	const effective = await getEffectiveReportParams(projectId);
 
 	return {
 		pageTitle: `فاکتورها · ${project.name}`,
@@ -49,6 +57,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		).length,
 		defaultFrom: defaults.from,
 		defaultTo: defaults.to,
+		reportParams: toPublicParams(effective.params),
+		reportParamsSource: effective.source,
 		invoices
 	};
 };
@@ -98,5 +108,43 @@ export const actions: Actions = {
 		}
 
 		redirect(303, `/projects/${projectId}/invoice/${result.id}`);
+	},
+
+	saveProjectParams: async ({ request, params, locals }) => {
+		const projectId = parseId(params.id);
+		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
+
+		const form = await request.formData();
+		const input = parseReportParamsForm(form);
+		const result = await saveProjectReportParams(projectId, input);
+		if (!result.ok) {
+			return fail(400, {
+				action: 'saveProjectParams',
+				...input,
+				message: result.message
+			});
+		}
+
+		return {
+			action: 'saveProjectParams',
+			success: true as const,
+			message: result.message
+		};
+	},
+
+	clearProjectParams: async ({ params, locals }) => {
+		const projectId = parseId(params.id);
+		if (!projectId) return fail(404, { message: 'پروژه یافت نشد.' });
+		await assertCanAccessProject(locals.user, projectId);
+		await assertCanManageProject(locals.user, projectId);
+
+		const result = await clearProjectReportParams(projectId);
+		return {
+			action: 'clearProjectParams',
+			success: true as const,
+			message: result.message
+		};
 	}
 };

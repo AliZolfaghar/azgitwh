@@ -1333,14 +1333,16 @@ html[data-theme='dark'] .kind-remote {
 	margin: 0;
 }
 
-.invoice-lang-switch .btn-secondary.is-active {
+.invoice-lang-switch .btn-secondary.is-active,
+.report-create-actions .btn-secondary.is-active {
 	border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
 	background: color-mix(in srgb, var(--color-primary) 14%, var(--color-paper));
 	color: var(--color-primary-dark);
 	font-weight: 700;
 }
 
-html[data-theme='dark'] .invoice-lang-switch .btn-secondary.is-active {
+html[data-theme='dark'] .invoice-lang-switch .btn-secondary.is-active,
+html[data-theme='dark'] .report-create-actions .btn-secondary.is-active {
 	color: var(--color-primary);
 }
 

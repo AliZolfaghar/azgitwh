@@ -3,7 +3,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { getProjectById } from './projects.js';
 import { listProjectRepositories } from './repositories.js';
-import { getReportParams, type ReportParams } from './reportParams.js';
+import { getEffectiveReportParams, type ReportParamsInput } from './reportParams.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -60,7 +60,7 @@ export type ProjectReportResult = {
 	periods: string[];
 };
 
-function summarizeParams(params: ReportParams) {
+function summarizeParams(params: ReportParamsInput) {
 	return {
 		linesPerHourAdd: params.lines_per_hour_add,
 		linesPerHourDel: params.lines_per_hour_del,
@@ -146,7 +146,7 @@ function parseCommits(
 	output: string,
 	repoName: string,
 	periods: string[],
-	params: ReportParams
+	params: ReportParamsInput
 ): ReportCommit[] {
 	const commits: ReportCommit[] = [];
 	let current: Omit<ReportCommit, 'dev_hours'> | null = null;
@@ -255,7 +255,7 @@ function mergeCloseSessions(commits: ReportCommit[], maxGapMinutes: number): Rep
 	return merged;
 }
 
-function buildDailyRows(allCommits: ReportCommit[], params: ReportParams): DailyReportRow[] {
+function buildDailyRows(allCommits: ReportCommit[], params: ReportParamsInput): DailyReportRow[] {
 	/** One row per developer / day / repo so hourly rates can resolve correctly. */
 	const byPersonDayRepo = new Map<string, ReportCommit[]>();
 	for (const commit of allCommits) {
@@ -398,7 +398,7 @@ export async function generateProjectReport(
 		return { ok: false, message: 'حداقل یک دوره به شکل YYYY-MM وارد کنید.' };
 	}
 
-	const params = await getReportParams();
+	const { params } = await getEffectiveReportParams(projectId);
 	const repositories = (await listProjectRepositories(projectId)).filter((repo) =>
 		Boolean(repo.enabled)
 	);

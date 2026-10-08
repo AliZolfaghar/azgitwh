@@ -1,5 +1,6 @@
 import {
 	getReportParams,
+	parseReportParamsForm,
 	saveReportParams,
 	toPublicParams
 } from '#lib/server/reportParams.js';
@@ -16,17 +17,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await request.formData();
-		const input = {
-			lines_per_hour_add: Number(form.get('lines_per_hour_add')),
-			lines_per_hour_del: Number(form.get('lines_per_hour_del')),
-			delete_weight: Number(form.get('delete_weight')),
-			min_work_time: Number(form.get('min_work_time')),
-			max_work_time_single: Number(form.get('max_work_time_single')),
-			max_gap_minutes: Number(form.get('max_gap_minutes')),
-			daily_max_hours: Number(form.get('daily_max_hours')),
-			exclude_www: form.get('exclude_www') === 'on' || form.get('exclude_www') === 'true'
-		};
+		const input = parseReportParamsForm(await request.formData());
 
 		const result = await saveReportParams(input);
 		if (!result.ok) {
